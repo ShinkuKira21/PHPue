@@ -28,12 +28,10 @@
             
             $meta = [];
             
-            // Extract <title>
             if (preg_match('/<title>(.*?)<\/title>/s', $headerContent, $matches)) {
                 $meta['title'] = trim($matches[1]);
             }
             
-            // Extract complete header content for fallback
             $meta['raw_header'] = $headerContent;
             
             return $meta;
@@ -75,7 +73,6 @@
         public function buildHeaderFromMeta($meta) {
             $header = '';
             
-            // If we have a raw header, use that directly
             if (isset($meta['raw_header']) && !empty($meta['raw_header'])) {
                 $header = $this->processAssetPaths($meta['raw_header']);
                 $header = $this->ensureCorrectScriptOrder($header);
@@ -85,18 +82,14 @@
         }
 
         public function ensureCorrectScriptOrder($header) {
-            // Extract jQuery and Bootstrap scripts
             preg_match_all('/<script[^>]*src="[^"]*jquery[^"]*"[^>]*><\/script>/i', $header, $jqueryMatches);
             preg_match_all('/<script[^>]*src="[^"]*bootstrap[^"]*"[^>]*><\/script>/i', $header, $bootstrapMatches);
             
-            // Remove them from the header
             $header = preg_replace('/<script[^>]*src="[^"]*jquery[^"]*"[^>]*><\/script>/i', '', $header);
             $header = preg_replace('/<script[^>]*src="[^"]*bootstrap[^"]*"[^>]*><\/script>/i', '', $header);
             
-            // Re-add in correct order: jQuery first, then Bootstrap
             $orderedScripts = implode("\n", $jqueryMatches[0]) . "\n" . implode("\n", $bootstrapMatches[0]);
             
-            // Insert scripts before the closing </head> tag or at the end
             if (strpos($header, '</head>') !== false) {
                 $header = str_replace('</head>', $orderedScripts . "\n</head>", $header);
             } else {
@@ -108,12 +101,10 @@
 
 
         private function processAssetPaths($headerContent) {
-            // Process script src paths
             $headerContent = preg_replace_callback(
                 '/<script\s+[^>]*src="([^"]*)"[^>]*>/',
                 function($matches) {
                     $src = $matches[1];
-                    // Convert relative asset paths to absolute
                     if (strpos($src, 'assets/') === 0 && $src[0] !== '/') {
                         $src = '/' . $src;
                     }
@@ -122,12 +113,10 @@
                 $headerContent
             );
             
-            // Process link href paths (for CSS, etc.)
             $headerContent = preg_replace_callback(
                 '/<link\s+[^>]*href="([^"]*)"[^>]*>/',
                 function($matches) {
                     $href = $matches[1];
-                    // Convert relative asset paths to absolute
                     if (strpos($href, 'assets/') === 0 && $href[0] !== '/') {
                         $href = '/' . $href;
                     }
@@ -195,13 +184,12 @@
 
         private function injectRoutingLogic($scriptContent) {
             $routingLogic = <<<'PHP'
-                // Auto-injected routing system
                 $current_route = $_GET['page'] ?? 'index';
                 $available_routes = array_keys(get_phpue_routing()->routes);
                 
                 if (!in_array($current_route, $available_routes)) {
                     http_response_code(404);
-                    $current_route = 'index'; // Fallback to index
+                    $current_route = 'index';
                 }
                 
                 $GLOBALS['phpue_current_route'] = $current_route;
@@ -211,7 +199,6 @@
         }
 
         private function injectPageContent($template) {
-            // Replace <View> component with dynamic page content
             $pageInjectionLogic = <<<'PHP'
                 <?php
                     $routing = get_phpue_routing();
@@ -258,51 +245,22 @@
 
         private function injectDynamicHeaderLogic($scriptContent) {
             $dynamicHeaderLogic = <<<'PHP'
-                // Auto-injected dynamic header system
                 $current_route = $_GET['page'] ?? 'index';
                 
                 $routing = get_phpue_routing();
                 $route_meta = $routing->getRouteMeta($current_route);
                 
-                // Start with App.pvue header as base
                 $current_header = $phpue_header ?? '';
                 
-                // If current route has its own header, MERGE them (don't replace)
                 if (!empty($route_meta)) {
                     $route_header = $routing->buildHeaderFromMeta($route_meta);
                     if (!empty($route_header)) {
-                        // Merge: Use route header + App header
                         $current_header = $route_header . "\n" . $current_header;
                     }
                 }
             PHP;
 
             return $dynamicHeaderLogic . "\n" . $scriptContent;
-        }
-
-        private function injectHeadersIntoRootTemplate($template) {
-            // Remove any existing DOCTYPE or html structure
-            $template = preg_replace('/<!DOCTYPE[^>]*>/i', '', $template);
-            $template = preg_replace('/<html[^>]*>/i', '', $template);
-            $template = preg_replace('/<\/html>/i', '', $template);
-            $template = preg_replace('/<head[^>]*>.*?<\/head>/is', '', $template);
-            $template = preg_replace('/<body[^>]*>/i', '', $template);
-            $template = preg_replace('/<\/body>/i', '', $template);
-            
-            // Wrap with proper HTML structure
-            $template = <<<HTML
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <?= \$current_header ?? '' ?>
-                </head>
-                <body>
-                    $template
-                </body>
-                </html>
-            HTML;
-            
-            return $template;
         }
 
         public function getRouting()
@@ -372,7 +330,7 @@
             
             $template = preg_replace('/\{\{\s*(\$.*?)\s*\}\}/', '<?= $1 ?>', $template);
             
-            $template = preg_replace_callback('/v-for="(\$.*?) in (\$.*?)"/', 
+            $template = preg_replace_callback('/p-for="(\$.*?) in (\$.*?)"/', 
                 function($matches) {
                     $item = trim($matches[1]);
                     $array = trim($matches[2]); 
@@ -380,8 +338,22 @@
                 }, 
                 $template);
             
-            $vForStack = [];
-            $vIfStack = [];
+            $template = preg_replace_callback('/p-model="(\$[^"]*)"/', 
+                function($matches) {
+                    $variable = trim($matches[1]);
+                    return "name=\"".substr($variable,1)."\" value=\"<?= htmlspecialchars($variable) ?>\"";
+                }, 
+                $template);
+            
+            $template = preg_replace_callback('/p-if="([^"]*)"/', 
+                function($matches) {
+                    $condition = trim($matches[1]);
+                    return "php-if=\"$condition\"";
+                }, 
+                $template);
+            
+            $pForStack = [];
+            $pIfStack = [];
             
             $lines = explode("\n", $template);
             $output = [];
@@ -392,30 +364,30 @@
                     $item = trim($matches[3]); 
                     $array = trim($matches[4]);
                     
-                    $vForStack[] = $tag;
+                    $pForStack[] = $tag;
                     $line = preg_replace('/php-for="[^"]+"/', '', $line);
                     $line = "<?php foreach($array as $item): ?>" . $line;
                 }
                 
-                if (preg_match('/<(\w+)([^>]*) v-if="([^"]*)"([^>]*)>/', $line, $matches)) {
+                if (preg_match('/<(\w+)([^>]*) php-if="([^"]*)"([^>]*)>/', $line, $matches)) {
                     $tag = $matches[1];
                     $condition = trim($matches[3]);
                     
-                    $vIfStack[] = $tag;
-                    $line = preg_replace('/v-if="[^"]+"/', '', $line);
+                    $pIfStack[] = $tag;
+                    $line = preg_replace('/php-if="[^"]+"/', '', $line);
                     $line = "<?php if($condition): ?>" . $line;
                 }
                 
                 if (preg_match('/<\/(\w+)>/', $line, $matches)) {
                     $closingTag = $matches[1];
                     
-                    if (!empty($vIfStack) && $closingTag === end($vIfStack)) {
-                        array_pop($vIfStack);
+                    if (!empty($pIfStack) && $closingTag === end($pIfStack)) {
+                        array_pop($pIfStack);
                         $line = $line . "<?php endif; ?>";
                     }
                     
-                    if (!empty($vForStack) && $closingTag === end($vForStack)) {
-                        array_pop($vForStack);
+                    if (!empty($pForStack) && $closingTag === end($pForStack)) {
+                        array_pop($pForStack);
                         $line = $line . "<?php endforeach; ?>";
                     }
                 }
@@ -428,10 +400,10 @@
             return $template;
         }
 
+
         private function handleCscript($cscript) {
             if (empty($cscript)) return '';
             
-            // Convert PHP variables to JavaScript - handle all types properly
             $cscript = preg_replace_callback(
                 '/\{\{\s*(\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s*\}\}/',
                 function($matches) {
@@ -448,7 +420,6 @@
             $output = "<?php\n";
             
             if ($bRoot && !str_contains($script, 'session_start()')) {
-                $output .= "// Auto session management\n";
                 $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
                 $output .= "    @session_start();\n";
                 $output .= "}\n";
@@ -461,7 +432,6 @@
             $output .= $script . "\n";
             $output .= "?>\n";
             
-            // Properly structure the HTML with scripts at the bottom
             if ($bRoot) {
                 $output .= "<!DOCTYPE html>\n";
                 $output .= "<html>\n";
@@ -470,7 +440,7 @@
                 $output .= "</head>\n";
                 $output .= "<body>\n";
                 $output .= $template . "\n";
-                $output .= $cscript . "\n"; // Move cscript to bottom of body
+                $output .= $cscript . "\n";
                 $output .= "</body>\n";
                 $output .= "</html>\n";
             } else {

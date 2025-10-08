@@ -2,12 +2,10 @@
     require_once 'conversion.php';
 
     class PHPueServer {
-        private $converter;
         public $bDevMode;
 
         public function __construct()
         {
-            $this->converter = new PHPueConverter();
             $this->bDevMode = $this->detectDevMode();
         }
 
@@ -98,7 +96,6 @@
 
         private function serveApp()
         {
-            // Serve directly from .pvue files without creating dist files
             $appPVue = 'App.pvue';
             
             if(file_exists($appPVue)) {
@@ -120,7 +117,6 @@
         }
 
         private function compileAllFiles() {
-            // Compile App.pvue
             $appPVue = 'App.pvue';
             $appPHP = 'dist/App.php';
             if(file_exists($appPVue)) {
@@ -129,7 +125,6 @@
                 echo "✅ Compiled: $appPVue -> $appPHP\n";
             }
 
-            // Compile all components
             $files = glob('components/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = 'dist/components/' . basename($pvueFile, '.pvue') . '.php';
@@ -138,7 +133,6 @@
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
             }
 
-            // Compile all views
             $files = glob('views/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = 'dist/pages/' . basename($pvueFile, '.pvue') . '.php';
@@ -178,15 +172,12 @@
         }
     }
 
-    // Enhanced routing detection
     function get_current_route() {
         $request_uri = $_SERVER['REQUEST_URI'];
         $path = parse_url($request_uri, PHP_URL_PATH);
         
-        // Remove leading/trailing slashes
         $path = trim($path, '/');
         
-        // Handle root route
         if (empty($path)) {
             return 'index';
         }
@@ -194,12 +185,10 @@
         return $path;
     }
 
-    // Override the $_GET['page'] for clean URLs
     $_GET['page'] = get_current_route();
 
     $server = new PHPueServer();
 
-    // Check if build command was called
     if (isset($_GET['build']) || (isset($argv[1]) && $argv[1] === 'build')) {
         $server->build();
         exit;
