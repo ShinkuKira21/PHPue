@@ -282,7 +282,7 @@ Seamless Variable Passing
 **📁 Project Structure**
 
 
-text
+```text
 your-project/
 ├── App.pvue                 # Root application component
 ├── server.php              # Development server
@@ -300,6 +300,7 @@ your-project/
 │   ├── js/
 │   └── images/
 └── dist/                   # Compiled PHP files (production)
+```
 
 **🚀 Quick Start**
 Create App.pvue
