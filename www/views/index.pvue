@@ -1,11 +1,57 @@
+<script>
+    $age = 40;
+
+    $fruit = ["Banana", "Apple", "Cherry"];
+
+    $counter = 20;
+</script>
+
 <header>
     <title>Home</title>
-    <meta name="description" content="Free Web tutorials">
-    <meta name="keywords" content="HTML, CSS, JavaScript">
-    <meta name="author" content="John Doe">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PHPue leverages PHP server-side rendering, and can create affordable web applications">
+    <meta name="keywords" content="PHP, VUE, PHPue">
+    <meta name="author" content="Edward Patch">
 </header>
 
 <template>
     <h1>Home Page</h1>
+
+    <div id="js">
+        <p>JS Age: <span id="age"></span></p>
+    </div>
+
+    <div id="php">
+        <p>PHP Age: <span>{{$age}}</span></p>
+    </div>
+
+    <div id="jsFruit">
+        <p>PHP Injected into JS Fruit Array: <span id="fruit"></span></p>
+    </div>
+
+    <div>
+        <ul>
+            <li v-for="$fru in $fruit">{{ $fru }}</li>
+        </ul>
+    </div>
+
+    <div>
+        <p id="counter"></p>
+    </div>
 </template>
+
+<cscript>
+    let age = 27;
+    let ageContainer = document.getElementById("age");
+    ageContainer.innerText = age;
+
+    let fruit = {{$fruit}};
+
+    let fruitContainer = document.getElementById("fruit");
+    fruitContainer.innerText = fruit;
+
+    let counter = {{$counter}};
+    let counterContainer = document.getElementById("counter");
+    counterContainer.innerText = "Counter: " + counter;
+
+</cscript>
+

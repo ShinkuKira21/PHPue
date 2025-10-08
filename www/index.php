@@ -1,5 +1,3 @@
-<!-- Author: Edward Patch -->
-
 <?php
     require_once 'conversion.php';
 
@@ -25,6 +23,25 @@
             }
 
             $this->serveApp();
+        }
+
+        public function build() {
+            $this->ensureDistDirectory();
+            $this->compileAllFiles();
+            echo "✅ Build complete! All .pvue files compiled to dist/ directory\n";
+        }
+
+        private function ensureDistDirectory() {
+            $distDir = 'dist';
+            if (!is_dir($distDir)) {
+                mkdir($distDir, 0755, true);
+            }
+            if (!is_dir($distDir . '/components')) {
+                mkdir($distDir . '/components', 0755, true);
+            }
+            if (!is_dir($distDir . '/pages')) {
+                mkdir($distDir . '/pages', 0755, true);
+            }
         }
 
         private function detectDevMode() {
@@ -81,37 +98,53 @@
 
         private function serveApp()
         {
-            $phpCode = convert_pvue_file('App.pvue', true);
-    
-            eval('?>' . $phpCode);
+            // Serve directly from .pvue files without creating dist files
+            $appPVue = 'App.pvue';
+            
+            if(file_exists($appPVue)) {
+                $phpCode = convert_pvue_file($appPVue, true);
+                eval('?>' . $phpCode);
+            } else {
+                http_response_code(500);
+                echo "Error: App.pvue not found";
+            }
         }
 
-        private function ensureAppCompiled() {
-            $appPVue = 'App.pvue';
-            $appPHP = 'App.php';
+        private function compileViewOnDemand($viewPath) {
+            if (file_exists($viewPath)) {
+                $phpCode = convert_pvue_file($viewPath, false);
+                eval('?>' . $phpCode);
+                return true;
+            }
+            return false;
+        }
 
-            if(!file_exists($appPHP) || filemtime($appPVue) > filemtime($appPHP)) {
+        private function compileAllFiles() {
+            // Compile App.pvue
+            $appPVue = 'App.pvue';
+            $appPHP = 'dist/App.php';
+            if(file_exists($appPVue)) {
                 $phpCode = convert_pvue_file($appPVue, true);
                 file_put_contents($appPHP, $phpCode);
+                echo "✅ Compiled: $appPVue -> $appPHP\n";
             }
 
-            if($this->bDevMode)
-                $this->compileAllComponents();
-        }
-
-        private function compileAllComponents() {
-            $files = array_merge(
-                glob('components/*.pvue'),
-                glob('views/*.pvue')
-            );
-
+            // Compile all components
+            $files = glob('components/*.pvue');
             foreach ($files as $pvueFile) {
-                $phpFile = str_replace('.pvue', '.php', $pvueFile);
+                $phpFile = 'dist/components/' . basename($pvueFile, '.pvue') . '.php';
+                $phpCode = convert_pvue_file($pvueFile, false);
+                file_put_contents($phpFile, $phpCode);
+                echo "✅ Compiled: $pvueFile -> $phpFile\n";
+            }
 
-                if(!file_exists($phpFile) || filemtime($pvueFile) > filemtime($phpFile)) {
-                    $phpCode = convert_pvue_file($pvueFile, false);
-                    file_put_contents($phpFile, $phpCode);
-                }
+            // Compile all views
+            $files = glob('views/*.pvue');
+            foreach ($files as $pvueFile) {
+                $phpFile = 'dist/pages/' . basename($pvueFile, '.pvue') . '.php';
+                $phpCode = convert_pvue_file($pvueFile, false);
+                file_put_contents($phpFile, $phpCode);
+                echo "✅ Compiled: $pvueFile -> $phpFile\n";
             }
         }
 
@@ -145,9 +178,32 @@
         }
     }
 
+    // Enhanced routing detection
+    function get_current_route() {
+        $request_uri = $_SERVER['REQUEST_URI'];
+        $path = parse_url($request_uri, PHP_URL_PATH);
+        
+        // Remove leading/trailing slashes
+        $path = trim($path, '/');
+        
+        // Handle root route
+        if (empty($path)) {
+            return 'index';
+        }
+        
+        return $path;
+    }
+
+    // Override the $_GET['page'] for clean URLs
+    $_GET['page'] = get_current_route();
+
     $server = new PHPueServer();
 
-  
+    // Check if build command was called
+    if (isset($_GET['build']) || (isset($argv[1]) && $argv[1] === 'build')) {
+        $server->build();
+        exit;
+    }
 
     $server->serve();
 ?>

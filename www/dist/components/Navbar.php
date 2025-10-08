@@ -1,9 +1,10 @@
-<script>
+<?php
+
     $routes = phpue_navigation();
     $routes = array_reverse($routes, true);
-</script>
 
-<template>
+?>
+
     <nav class="navbar navbar-expand-lg bg-light">
         <div class="container">
             <a class="navbar-brand" href=""><img alt="Free Frontend Logo" class="img-fluid" height="" src="https://freefrontend.dev/wp-content/uploads/free-frontend-logo.png" width="300"></a> <button aria-controls="navbarSupportedContent9" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-bs-target="#navbarSupportedContent9" data-bs-toggle="collapse" type="button"><span class="navbar-toggler-icon"></span></button>
@@ -15,11 +16,12 @@
                     </div>
                 </form>
                 <ul class="navbar-nav ms-auto my-2 my-lg-0">
-                    <li v-for="$route in $routes" class="nav-item me-4">
+<?php foreach($routes as $route): ?>                    <li  class="nav-item me-4">
                         <a class="nav-link" href="{{ $route['url'] }}">{{ $route['title'] }}</a>
-                    </li>
+                    </li><?php endforeach; ?>
                 </ul>
             </div>
         </div>
     </nav>
-</template>
+
+
