@@ -231,7 +231,7 @@ App.pvue (Root Component)
 
 ```bash
 # Start development server with hot reload
-php server.php
+php index.php
 ```
 
 # Visit: http://localhost:3000/
@@ -239,7 +239,7 @@ php server.php
 🚀 Production Build
 ```bash
 # Compile all .pvue files to .php for production
-php server.php build
+php index.php build
 ```
 
 # Deploy the 'dist/' directory to your production server
@@ -285,21 +285,21 @@ Seamless Variable Passing
 ```text
 your-project/
 ├── App.pvue                 # Root application component
-├── server.php              # Development server
-├── conversion.php          # PHPue compiler
-├── components/             # Reusable components
+├── index.php                # Development server
+├── conversion.php           # PHPue compiler
+├── components/              # Reusable components
 │   ├── Navbar.pvue
 │   ├── Footer.pvue
 │   └── UserCard.pvue
-├── views/                  # Page views
+├── views/                   # Page views
 │   ├── index.pvue
 │   ├── about.pvue
 │   └── contact.pvue
-├── assets/                 # Static assets
+├── assets/                  # Static assets
 │   ├── css/
 │   ├── js/
 │   └── images/
-└── dist/                   # Compiled PHP files (production)
+└── dist/                    # Compiled PHP files (production)
 ```
 
 **🚀 Quick Start**
@@ -343,7 +343,7 @@ Create a view:
 Start development:
 
 ```bash
-php server.php
+php index.php
 ```
 
 💡 Why PHPue?
