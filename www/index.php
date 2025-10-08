@@ -1,3 +1,5 @@
+<!-- Author: Edward Patch -->
+
 <?php
     require_once 'conversion.php';
 
@@ -145,21 +147,7 @@
 
     $server = new PHPueServer();
 
-    if($server->bDevMode) {
-        register_shutdown_function(function() use ($server) {
-            $output = ob_get_clean();
-            $hotReloadScript = $server->injectHotReloadScript();
-
-            if(strpos($output, '</body>') !== false)
-                $output = str_replace('</body>', $hotReloadScript . '</body>', $output);
-
-            else $output .= $hotReloadScript;
-
-            echo $output;
-        });
-
-        ob_start();
-    }
+  
 
     $server->serve();
 ?>

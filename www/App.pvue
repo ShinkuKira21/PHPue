@@ -1,14 +1,13 @@
+<!-- Author: Edward Patch -->
 <script setup>
-    $name = "Edward";
-    $bShow = false;
-    $items = ['Apple', 'Banana', 'Cherry'];
+    @require Navbar 'components/Navbar.pvue';
+
+
+    $routes = phpue_navigation();
+    print_r($routes);
+    
 </script>
 
 <template>
-    <h1>Hello! My name is {{ $name }}</h1>
-    <p v-if="$bShow">OMG I WORK!!!</p>
-
-    <ul v-if="!empty($items)">
-        <li v-for="$item in $items">{{$item}}</li>
-    </ul>
+    <Navbar></Navbar>
 </template>
