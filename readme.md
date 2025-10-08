@@ -297,7 +297,7 @@ your-project/
 │   └── contact.pvue
 ├── assets/                  # Static assets
 │   ├── css/
-│   ├── js/
+│   ├── js/`
 │   └── images/
 └── dist/                    # Compiled PHP files (production)
 ```
