@@ -8,8 +8,19 @@
     
     @AJAX('POST')
     function saveBtnCounter()
-    {
-        $btnCount += 1;
+    { 
+        file_put_contents('debug.txt', "🟢 saveBtnCounter() called\n", FILE_APPEND);
+        file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
+        $_SESSION['btnCount'] += 1; 
+    }
+
+    @AJAX('POST')
+    function resetCounter()
+    { 
+        file_put_contents('debug.txt', "🟢 resetCounter() called\n", FILE_APPEND);
+        file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
+        $_SESSION['btnCount'] += 1; 
+        unset($_SESSION['btnCount']); 
     }
 </script>
 
@@ -29,17 +40,6 @@
                 <p class="text-lg text-gray-600">PHPue Demo - Server-side rendering with Vue-like syntax</p>
             </div>
 
-            <!-- PHP Server Side and JS Client Side Counter Button -->
-            <div class="flex gap-4 p-6">
-               <button class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-colors">
-                Count: 1
-                </button>
-                
-                <button class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors">
-                Reset Counter
-                </button>
-            </div>
-
              <!-- Fill Out a Form Button -->
             <div p-if="$bFillFormBtnHidden"  class="text-center mb-12">
                 <div onclick="callPHPMethod('hideFormButton')" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-phpue-blue to-blue-600 hover:from-blue-600 hover:to-phpue-blue text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -48,6 +48,17 @@
                     </svg>
                     Fill out a Form
                 </div>
+            </div>
+
+            <!-- PHP Server Side and JS Client Side Counter Button -->
+            <div class="flex gap-4 p-6">
+               <button onclick="incrementCounter('saveBtnCounter')" class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-colors">
+                Count: <span id="btnCounter"></span>
+                </button>
+                
+                <button onclick="resetCounter('resetCounter')" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors">
+                Reset Counter
+                </button>
             </div>
 
             <!-- Data Cards Grid -->
@@ -114,6 +125,10 @@
 </template>
 
 <cscript>
+    let btnCounter = {{$btnCount}};
+    let btnCounterContainer = document.getElementById("btnCounter");
+    btnCounterContainer.innerText = btnCounter;
+    
     let age = 27;
     let ageContainer = document.getElementById("age");
     ageContainer.innerText = age;
@@ -141,6 +156,54 @@
             if (response.status === 200) {
                 console.log("🟢 AJAX processed successfully, reloading...");
                 window.location.reload();
+            }
+            
+        } catch (error) {
+            console.log("❌ AJAX Error:", error);
+        }
+    }
+
+    async function incrementCounter(methodName)
+    {
+        btnCounter++;
+
+        try {
+            const response = await fetch('', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: methodName})
+            });
+            
+            console.log("🟢 AJAX Response Status:", response.status);
+
+            if(response.status === 200) {
+                 let btnCounterContainer = document.getElementById("btnCounter");
+                 btnCounterContainer.innerText = btnCounter;
+                 console.log("Here");
+            }
+            
+        } catch (error) {
+            console.log("❌ AJAX Error:", error);
+        }
+    }
+
+    async function resetCounter(methodName)
+    {
+        btnCounter = 0;
+
+        try {
+            const response = await fetch('', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: methodName})
+            });
+
+            console.log("🟢 AJAX Response Status:", response.status);
+
+            if(response.status === 200) {
+                let btnCounterContainer = document.getElementById("btnCounter");
+                btnCounterContainer.innerText = btnCounter;
+                console.log("Here");
             }
             
         } catch (error) {
