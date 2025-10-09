@@ -1,11 +1,4 @@
-<script>
-
-    $input = json_decode(file_get_contents('php://input'), true);
-    if(isset($input['action']) && $input['action'] === 'hideFormButton') {
-        hideFormButton();
-    }
-   
-
+<script>   
     $age = 40;
     $fruits = ["Banana", "Apple", "Cherry"];
     $counter = 20;
