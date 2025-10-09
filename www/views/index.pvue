@@ -5,7 +5,7 @@
 
     $bFillFormBtnHidden = $_SESSION['bFillFormBtnHidden'] ?? false;
 
-    @AJAX
+    @AJAXPOST
     function hideFormButton()
     {
         file_put_contents('debug.txt', "🟢 hideFormButton() called\n", FILE_APPEND);
@@ -140,6 +140,8 @@
             if (response.status === 200) {
                 console.log("🟢 AJAX processed successfully, reloading...");
             }
+
+            window.location.reload();
             
         } catch (error) {
             console.log("❌ AJAX Error:", error);

@@ -140,6 +140,7 @@
             $appPVue = 'App.pvue';
             $appPHP = 'dist/App.php';
             if(file_exists($appPVue)) {
+                $this->preProcessAllViewsForAjax();
                 $phpCode = convert_pvue_file($appPVue, true, $appPVue);
                 file_put_contents($appPHP, $phpCode);
                 echo "✅ Compiled: $appPVue -> $appPHP\n";

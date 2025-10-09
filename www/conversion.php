@@ -237,14 +237,14 @@
                 $this->ajaxFunctions[$pageName] = [];
             }
             
-            if (preg_match_all('/@AJAX\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
+            if (preg_match_all('/@AJAXPOST\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
                 foreach ($matches[1] as $ajaxFunction) {
                     if (preg_match('/function\s+(\w+)/', $ajaxFunction, $funcMatch)) {
                         $functionName = $funcMatch[1];
                         $this->ajaxFunctions[$pageName][$functionName] = trim($ajaxFunction);
                     }
                 }
-                $scriptContent = preg_replace('/@AJAX\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '// @AJAX function moved to ajax file', $scriptContent);
+                $scriptContent = preg_replace('/@AJAXPOST\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '// @AJAX function moved to ajax file', $scriptContent);
             }
             
             if (preg_match('/(\$input\s*=\s*json_decode\([^;]+;[^if]+if\s*\(\s*isset\(\$input\[\'action\'\]\)[^)]+\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
@@ -550,19 +550,27 @@
                 $output .= "        require_once \$ajaxFile;\n";
                 $output .= "    }\n";
                 $output .= "} else {\n";
+                $output .= "    // Development mode: Load AJAX functions directly\n";
                 
+                // Add all the AJAX functions for development mode
                 foreach ($this->ajaxFunctions as $pageName => $functions) {
                     foreach ($functions as $functionName => $functionCode) {
                         $output .= "    " . str_replace("\n", "\n    ", $functionCode) . "\n\n";
                     }
                 }
+                
                 $output .= "}\n\n";
 
+                // Add the POST request handling logic here
+                $output .= "// Handle AJAX/POST requests\n";
                 $output .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
-                foreach ($this->ajaxHandlingCode as $pageName => $ajaxCode) {
-                    $indentedAjaxCode = preg_replace('/^/m', '    ', $ajaxCode);
-                    $output .= $indentedAjaxCode;
-                }
+                $output .= "    \$input = json_decode(file_get_contents('php://input'), true);\n";
+                $output .= "    if (isset(\$input['action'])) {\n";
+                $output .= "        \$action = \$input['action'];\n";
+                $output .= "        if (function_exists(\$action)) {\n";
+                $output .= "            \$action();\n";
+                $output .= "        }\n";
+                $output .= "    }\n";
                 $output .= "    exit;\n";
                 $output .= "}\n\n";
             }
