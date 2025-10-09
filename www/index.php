@@ -215,6 +215,8 @@
     $server = new PHPueServer();
 
     if (isset($_GET['build']) || (isset($argv[1]) && $argv[1] === 'build')) {
+        define('PHPUE_BUILD_MODE', true);
+
         $server->build();
         exit;
     }

@@ -237,14 +237,18 @@
                 $this->ajaxFunctions[$pageName] = [];
             }
             
-            if (preg_match_all('/@AJAXPOST\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
-                foreach ($matches[1] as $ajaxFunction) {
+            if (preg_match_all('/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
+                foreach ($matches[2] as $index => $ajaxFunction) {
+                    $httpMethod = $matches[1][$index];
                     if (preg_match('/function\s+(\w+)/', $ajaxFunction, $funcMatch)) {
                         $functionName = $funcMatch[1];
-                        $this->ajaxFunctions[$pageName][$functionName] = trim($ajaxFunction);
+                        $this->ajaxFunctions[$pageName][$functionName] = [
+                            'code' => trim($ajaxFunction),
+                            'method' => $httpMethod
+                        ];
                     }
                 }
-                $scriptContent = preg_replace('/@AJAXPOST\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '// @AJAX function moved to ajax file', $scriptContent);
+                $scriptContent = preg_replace('/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '// @AJAX function moved to ajax file', $scriptContent);
             }
             
             if (preg_match('/(\$input\s*=\s*json_decode\([^;]+;[^if]+if\s*\(\s*isset\(\$input\[\'action\'\]\)[^)]+\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
@@ -281,8 +285,8 @@
                 $ajaxContent = "<?php\n";
                 $ajaxContent .= "// AJAX handlers for $pageName\n";
                 
-                foreach ($functions as $functionName => $functionCode) {
-                    $ajaxContent .= $functionCode . "\n\n";
+                foreach ($functions as $functionName => $functionData) {
+                    $ajaxContent .= $functionData['code'] . "\n\n"; // FIXED: Use ['code'] instead of direct array
                 }
                 
                 if (isset($this->ajaxHandlingCode[$pageName])) {
@@ -549,30 +553,48 @@
                 $output .= "    foreach (\$ajaxFiles as \$ajaxFile) {\n";
                 $output .= "        require_once \$ajaxFile;\n";
                 $output .= "    }\n";
-                $output .= "} else {\n";
-                $output .= "    // Development mode: Load AJAX functions directly\n";
                 
-                // Add all the AJAX functions for development mode
-                foreach ($this->ajaxFunctions as $pageName => $functions) {
-                    foreach ($functions as $functionName => $functionCode) {
-                        $output .= "    " . str_replace("\n", "\n    ", $functionCode) . "\n\n";
+                // Check if we're in build mode
+                if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {
+                    // Build mode: don't include the else block (functions are in separate files)
+                    $output .= "}\n";
+                } else {
+                    // Development mode: include the else block with functions
+                    $output .= "} else {\n";
+                    $output .= "    // Development mode: Load AJAX functions directly\n";
+                    
+                    foreach ($this->ajaxFunctions as $pageName => $functions) {
+                        foreach ($functions as $functionName => $functionData) {
+                            $output .= "    " . str_replace("\n", "\n    ", $functionData['code']) . "\n\n";
+                        }
                     }
+                    $output .= "}\n";
                 }
-                
-                $output .= "}\n\n";
 
-                // Add the POST request handling logic here
-                $output .= "// Handle AJAX/POST requests\n";
-                $output .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
-                $output .= "    \$input = json_decode(file_get_contents('php://input'), true);\n";
+                $output .= "\n";
+                
+                // MOVE AJAX HANDLING TO THE TOP - before routing logic
+                $output .= "// Handle AJAX requests (must be before routing)\n";
+                $output .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST' || \$_SERVER['REQUEST_METHOD'] === 'GET') {\n";
+                $output .= "    \$input = [];\n";
+                $output .= "    if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
+                $output .= "        \$input = json_decode(file_get_contents('php://input'), true) ?? [];\n";
+                $output .= "    } else {\n";
+                $output .= "        // GET requests - use query parameters\n";
+                $output .= "        \$input = \$_GET;\n";
+                $output .= "    }\n";
+                $output .= "    \n";
                 $output .= "    if (isset(\$input['action'])) {\n";
                 $output .= "        \$action = \$input['action'];\n";
                 $output .= "        if (function_exists(\$action)) {\n";
                 $output .= "            \$action();\n";
+                $output .= "            exit; // Exit immediately after AJAX call\n";
                 $output .= "        }\n";
                 $output .= "    }\n";
-                $output .= "    exit;\n";
                 $output .= "}\n\n";
+
+                // Now add the routing logic AFTER AJAX handling
+                $output .= $script . "\n";
             }
                                             
             if (!empty($header)) {

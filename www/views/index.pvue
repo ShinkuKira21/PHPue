@@ -4,16 +4,21 @@
     $counter = 20;
 
     $bFillFormBtnHidden = $_SESSION['bFillFormBtnHidden'] ?? false;
+    
+    $_SESSION['bFillFormBtnHidden'] = false;
 
-    @AJAXPOST
+    @AJAX('POST')
     function hideFormButton()
     {
         file_put_contents('debug.txt', "🟢 hideFormButton() called\n", FILE_APPEND);
         file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
-        
-        $_SESSION['bFillFormBtnHidden'] = true;
-        
-        file_put_contents('debug.txt', "🟢 Session set to true\n", FILE_APPEND);
+    }
+
+    @AJAX('GET')
+    function setSession()
+    {
+        file_put_contents('debug.txt', "🟢 setSession() called\n", FILE_APPEND);
+        file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
     }
     
 </script>
