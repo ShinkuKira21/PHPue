@@ -54,19 +54,35 @@
             return $this->routes[$routeName]['header'] ?? [];
         }
         
-        public function getCurrentPageContent() {
-            $currentRoute = $_GET['page'] ?? 'index';
-            $sourceFile = $this->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+        public function preProcessCurrentPage($sourceFile = null) {
+            if ($sourceFile === null) {
+                $currentRoute = $_GET['page'] ?? 'index';
+                $sourceFile = $this->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+            }
             
             if (file_exists($sourceFile)) {
-                ob_start();
                 $content = file_get_contents($sourceFile);
-                $converter = new PHPueConverter();
-                $phpCode = $converter->convertPVueToPHP($content, false);
-                eval('?>' . $phpCode);
+                $converter = get_phpue_converter();
+                
+                // Pre-process to extract AJAX data (but don't execute)
+                $converter->preProcessForAjax($content, $sourceFile);
+                
+                // Store the processed PHP code for later execution
+                // FIX: Pass the filename parameter here!
+                $GLOBALS['phpue_current_page_code'] = $converter->convertPVueToPHP($content, false, $sourceFile);
+                return true;
+            }
+            return false;
+        }
+        
+        public function getCurrentPageContent() {
+            if (isset($GLOBALS['phpue_current_page_code'])) {
+                ob_start();
+                eval('?>' . $GLOBALS['phpue_current_page_code']);
                 return ob_get_clean();
             }
             
+            $currentRoute = $_GET['page'] ?? 'index';
             return "<div>Page not found: $currentRoute</div>";
         }
         
@@ -131,16 +147,30 @@
 
     class PHPueConverter {   
         private $routing;
-    
+        private $ajaxHandlingCode = [];
+        private $ajaxFunctions = [];
+        private $currentPageName = '';
+        
         public function __construct() {
             $this->routing = new PHPRouting();
+            $this->ajaxHandlingCode = [];
+            $this->ajaxFunctions = []; 
         }
 
-        public function convertPVueToPHP($pvueContent, $bRoot = false) {
+        public function convertPVueToPHP($pvueContent, $bRoot = false, $fileName = '') {
+            $this->currentPageName = basename($fileName, '.pvue');
+            // Debug: make sure we have the right page name
+            if (empty($this->currentPageName)) {
+                error_log("Warning: Empty page name for file: $fileName");
+            }
+
             $script = $this->extractBetween($pvueContent, '<script setup>', '</script>');
             if (empty(trim($script))) {
                 $script = $this->extractBetween($pvueContent, '<script>', '</script>');
             }
+
+            // Process AJAX annotations in EVERY component
+            $script = $this->processAjaxAnnotations($script, $this->currentPageName);
 
             $header = $this->extractBetween($pvueContent, '<header>', '</header>');
             $template = $this->extractBetween($pvueContent, '<template>', '</template>');
@@ -180,6 +210,111 @@
             $output = $this->buildOutput($script, $convertedTemplate, $convertedCscript, $bRoot, $header);
             
             return $output;
+        }
+
+        public function preProcessForAjax($pvueContent, $fileName = '') {
+            $this->currentPageName = basename($fileName, '.pvue');
+            $script = $this->extractBetween($pvueContent, '<script setup>', '</script>');
+            if (empty(trim($script))) {
+                $script = $this->extractBetween($pvueContent, '<script>', '</script>');
+            }
+            
+            // Process AJAX annotations but don't output anything
+            $this->processAjaxAnnotations($script, $this->currentPageName);
+            
+            return $this;
+        }
+
+        public function getAjaxFunctions() {
+            return $this->ajaxFunctions;
+        }
+
+        public function getAjaxHandling() {
+            return $this->ajaxHandlingCode;
+        }
+
+        public function setAjaxData($functions, $handling) {
+            $this->ajaxFunctions = $functions;
+            $this->ajaxHandlingCode = $handling;
+        }
+
+        /**
+         * Process @AJAX annotations - Collect from all components
+         */
+        private function processAjaxAnnotations($scriptContent, $pageName) {
+            // Initialize arrays for this page if they don't exist
+            if (!isset($this->ajaxFunctions[$pageName])) {
+                $this->ajaxFunctions[$pageName] = [];
+            }
+            
+            // Extract @AJAX functions
+            if (preg_match_all('/@AJAX\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
+                foreach ($matches[1] as $ajaxFunction) {
+                    if (preg_match('/function\s+(\w+)/', $ajaxFunction, $funcMatch)) {
+                        $functionName = $funcMatch[1];
+                        $this->ajaxFunctions[$pageName][$functionName] = trim($ajaxFunction);
+                    }
+                }
+                // Remove @AJAX functions from this component's script
+                $scriptContent = preg_replace('/@AJAX\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '// @AJAX function moved to ajax file', $scriptContent);
+            }
+            
+            // Extract AJAX calling logic
+            if (preg_match('/(\$input\s*=\s*json_decode\([^;]+;[^if]+if\s*\(\s*isset\(\$input\[\'action\'\]\)[^)]+\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
+                $this->ajaxHandlingCode[$pageName] = trim($matches[1]);
+                // Remove AJAX calling logic from this component's script
+                $scriptContent = str_replace($matches[1], '// AJAX calling logic moved to ajax file', $scriptContent);
+            }
+            
+            return $scriptContent;
+        }
+
+        public function generateAjaxFiles() {
+            $ajaxDir = 'dist/ajax';
+            if (!is_dir($ajaxDir)) {
+                mkdir($ajaxDir, 0755, true);
+            }
+            
+            foreach ($this->ajaxFunctions as $pageName => $functions) {
+                // Skip if pageName is empty
+                if (empty($pageName)) continue;
+                
+                // Allow: views (index, about, etc.) AND App
+                $isView = false;
+                foreach ($this->routing->routes as $routeName => $route) {
+                    if ($routeName === $pageName) {
+                        $isView = true;
+                        break;
+                    }
+                }
+                
+                $isApp = ($pageName === 'App');
+                
+                if (!$isView && !$isApp) {
+                    continue; // Skip components (Navbar, etc.) and other files
+                }
+                
+                $ajaxContent = "<?php\n";
+                $ajaxContent .= "// AJAX handlers for $pageName\n";
+                
+                // Add functions
+                foreach ($functions as $functionName => $functionCode) {
+                    $ajaxContent .= $functionCode . "\n\n";
+                }
+                
+                // Add AJAX calling logic for this page
+                if (isset($this->ajaxHandlingCode[$pageName])) {
+                    $ajaxContent .= "// AJAX/POST Request Handling for $pageName\n";
+                    $ajaxContent .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
+                    $indentedAjaxCode = preg_replace('/^/m', '    ', $this->ajaxHandlingCode[$pageName]);
+                    $ajaxContent .= $indentedAjaxCode;
+                    $ajaxContent .= "}\n";
+                }
+                
+                $ajaxFile = $ajaxDir . "/ajax-$pageName.php";
+                file_put_contents($ajaxFile, $ajaxContent);
+                echo "✅ Generated AJAX: $ajaxFile\n";
+            }
         }
 
         private function injectRoutingLogic($scriptContent) {
@@ -328,8 +463,7 @@
         private function convertVueSyntax($template) {
             $template = preg_replace('/<header>.*?<\/header>/s', '', $template);
             
-            $template = preg_replace('/\{\{\s*(\$.*?)\s*\}\}/', '<?= $1 ?>', $template);
-            
+            // Step 1: Convert p-for to php-for
             $template = preg_replace_callback('/p-for="(\$.*?) in (\$.*?)"/', 
                 function($matches) {
                     $item = trim($matches[1]);
@@ -338,10 +472,29 @@
                 }, 
                 $template);
             
+            // Step 2: Process loops on the ENTIRE template (not line by line)
+            $template = preg_replace_callback(
+                '/<(\w+)([^>]*)php-for="(\$[^"]+) in (\$[^"]+)"([^>]*)>([\s\S]*?)<\/\1>/',
+                function($matches) {
+                    $tag = $matches[1];
+                    $item = trim($matches[3]); 
+                    $array = trim($matches[4]);
+                    $content = $matches[6]; // The content between opening and closing tags
+                    
+                    return "<?php if(isset($array) && is_array($array)): foreach($array as $item): ?>" .
+                        "<$tag{$matches[2]}{$matches[5]}>$content</$tag>" .
+                        "<?php endforeach; endif; ?>";
+                },
+                $template
+            );
+            
+            // Step 3: Process template variables
+            $template = preg_replace('/\{\{\s*(\$.*?)\s*\}\}/', '<?= htmlspecialchars($1 ?? "") ?>', $template);
+            
             $template = preg_replace_callback('/p-model="(\$[^"]*)"/', 
                 function($matches) {
                     $variable = trim($matches[1]);
-                    return "name=\"".substr($variable,1)."\" value=\"<?= htmlspecialchars($variable) ?>\"";
+                    return "name=\"".substr($variable,1)."\" value=\"<?= htmlspecialchars($variable ?? '') ?>\"";
                 }, 
                 $template);
             
@@ -352,23 +505,11 @@
                 }, 
                 $template);
             
-            $pForStack = [];
             $pIfStack = [];
-            
             $lines = explode("\n", $template);
             $output = [];
             
             foreach ($lines as $line) {
-                if (preg_match('/<(\w+)([^>]*) php-for="(\$[^"]+) in (\$[^"]+)"([^>]*)>/', $line, $matches)) {
-                    $tag = $matches[1];
-                    $item = trim($matches[3]); 
-                    $array = trim($matches[4]);
-                    
-                    $pForStack[] = $tag;
-                    $line = preg_replace('/php-for="[^"]+"/', '', $line);
-                    $line = "<?php foreach($array as $item): ?>" . $line;
-                }
-                
                 if (preg_match('/<(\w+)([^>]*) php-if="([^"]*)"([^>]*)>/', $line, $matches)) {
                     $tag = $matches[1];
                     $condition = trim($matches[3]);
@@ -384,11 +525,6 @@
                     if (!empty($pIfStack) && $closingTag === end($pIfStack)) {
                         array_pop($pIfStack);
                         $line = $line . "<?php endif; ?>";
-                    }
-                    
-                    if (!empty($pForStack) && $closingTag === end($pForStack)) {
-                        array_pop($pForStack);
-                        $line = $line . "<?php endforeach; ?>";
                     }
                 }
                 
@@ -418,25 +554,75 @@
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
-            
-            if ($bRoot && !str_contains($script, 'session_start()')) {
-                $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
-                $output .= "    @session_start();\n";
-                $output .= "}\n";
-            }
+                
+            if ($bRoot) {
+                // Auto session management
+                if (!str_contains($script, 'session_start()')) {
+                    $output .= "// Auto session management\n";
+                    $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
+                    $output .= "    @session_start();\n";
+                    $output .= "}\n";
+                }
 
+                $output .= "// Load AJAX handlers\n";
+                $output .= "\$ajaxFiles = glob('dist/ajax/ajax-*.php');\n";
+                $output .= "if (!empty(\$ajaxFiles)) {\n";
+                $output .= "    // Production mode: Load from pre-compiled files\n";
+                $output .= "    foreach (\$ajaxFiles as \$ajaxFile) {\n";
+                $output .= "        require_once \$ajaxFile;\n";
+                $output .= "    }\n";
+                $output .= "} else {\n";
+                $output .= "    // Development/Runtime mode: Inject AJAX code directly\n";
+                
+                // Inject all AJAX functions
+                foreach ($this->ajaxFunctions as $pageName => $functions) {
+                    foreach ($functions as $functionName => $functionCode) {
+                        $output .= "    " . str_replace("\n", "\n    ", $functionCode) . "\n\n";
+                    }
+                }
+                $output .= "}\n\n"; // Close the else block here
+
+                // 🚨 MOVE THE AJAX HANDLING OUTSIDE THE CONDITIONAL
+                $output .= "// AJAX/POST Request Handling (runs in both modes)\n";
+                $output .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
+                foreach ($this->ajaxHandlingCode as $pageName => $ajaxCode) {
+                    $indentedAjaxCode = preg_replace('/^/m', '    ', $ajaxCode);
+                    $output .= $indentedAjaxCode;
+                }
+                $output .= "    // Exit after AJAX processing to prevent page render\n";
+                $output .= "    exit;\n";
+                $output .= "}\n\n";
+            }
+                                            
             if (!empty($header)) {
                 $output .= "\$phpue_header = <<<HTML\n{$header}\nHTML;\n";
             }
             
             $output .= $script . "\n";
             $output .= "?>\n";
-            
+
             if ($bRoot) {
                 $output .= "<!DOCTYPE html>\n";
                 $output .= "<html>\n";
                 $output .= "<head>\n";
-                $output .= "    <?= \$current_header ?? '' ?>\n";
+                
+                // Load ALL headers upfront - App.pvue headers + current view headers
+                $output .= "<?php\n";
+                $output .= "// Start with App.pvue header\n";
+                $output .= "echo \$phpue_header ?? '';\n";
+                $output .= "\n";
+                $output .= "// Add current view header\n";
+                $output .= "\$routing = get_phpue_routing();\n";
+                $output .= "\$current_route = \$_GET['page'] ?? 'index';\n";
+                $output .= "\$route_meta = \$routing->getRouteMeta(\$current_route);\n";
+                $output .= "if (!empty(\$route_meta)) {\n";
+                $output .= "    \$view_header = \$routing->buildHeaderFromMeta(\$route_meta);\n";
+                $output .= "    if (!empty(\$view_header)) {\n";
+                $output .= "        echo \"\\n\" . \$view_header;\n";
+                $output .= "    }\n";
+                $output .= "}\n";
+                $output .= "?>\n";
+                
                 $output .= "</head>\n";
                 $output .= "<body>\n";
                 $output .= $template . "\n";
@@ -452,15 +638,23 @@
         }
     }
 
+    function get_phpue_converter() {
+        static $converter = null;
+        if ($converter === null) {
+            $converter = new PHPueConverter();
+        }
+        return $converter;
+    }
+
     function convert_pvue_file($pvueFilePath, $bRoot = false) {
-        $converter = new PHPueConverter();
+        $converter = get_phpue_converter();
         
         if (!file_exists($pvueFilePath)) {
             throw new Exception("PVue file not found: $pvueFilePath");
         }
         
         $content = file_get_contents($pvueFilePath);
-        return $converter->convertPVueToPHP($content, $bRoot);
+        return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath); // ADD filename parameter
     }
 
     function get_phpue_routing() {
@@ -475,6 +669,12 @@
                     $routing->addView($view);
                 }
             }
+            
+            // PRE-PROCESS THE CURRENT PAGE to collect AJAX data
+            // MODIFY this line:
+            $currentRoute = $_GET['page'] ?? 'index';
+            $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+            $routing->preProcessCurrentPage($sourceFile); // ADD filename parameter
         }
         return $converter->getRouting();
     }

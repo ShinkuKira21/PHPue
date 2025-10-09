@@ -1,0 +1,33 @@
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true
+🟢 hideFormButton() called
+🟢 Session status: 2
+🟢 Session set to true

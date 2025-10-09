@@ -40,6 +40,10 @@
             if (!is_dir($distDir . '/pages')) {
                 mkdir($distDir . '/pages', 0755, true);
             }
+            // ADD THIS:
+            if (!is_dir($distDir . '/ajax')) {
+                mkdir($distDir . '/ajax', 0755, true);
+            }
         }
 
         private function detectDevMode() {
@@ -99,28 +103,48 @@
             $appPVue = 'App.pvue';
             
             if(file_exists($appPVue)) {
+                $this->preProcessAllViewsForAjax();
+
                 $phpCode = convert_pvue_file($appPVue, true);
+
                 eval('?>' . $phpCode);
             } else {
                 http_response_code(500);
                 echo "Error: App.pvue not found";
             }
         }
-
-        private function compileViewOnDemand($viewPath) {
-            if (file_exists($viewPath)) {
-                $phpCode = convert_pvue_file($viewPath, false);
-                eval('?>' . $phpCode);
-                return true;
+        
+        private function preProcessAllViewsForAjax() {
+            $converter = get_phpue_converter();
+            
+            // Pre-process App.pvue
+            if (file_exists('App.pvue')) {
+                $content = file_get_contents('App.pvue');
+                $converter->preProcessForAjax($content, 'App.pvue');
             }
-            return false;
+            
+            // Pre-process all views
+            $views = glob('views/*.pvue');
+            foreach ($views as $view) {
+                $content = file_get_contents($view);
+                $converter->preProcessForAjax($content, $view);
+            }
+            
+            // Pre-process all components (optional)
+            $components = glob('components/*.pvue');
+            foreach ($components as $component) {
+                $content = file_get_contents($component);
+                $converter->preProcessForAjax($content, $component);
+            }
         }
 
         private function compileAllFiles() {
+            $this->ensureDistDirectory(); // Make sure ajax directory exists
+            
             $appPVue = 'App.pvue';
             $appPHP = 'dist/App.php';
             if(file_exists($appPVue)) {
-                $phpCode = convert_pvue_file($appPVue, true);
+                $phpCode = convert_pvue_file($appPVue, true, $appPVue); // ADD filename parameter
                 file_put_contents($appPHP, $phpCode);
                 echo "✅ Compiled: $appPVue -> $appPHP\n";
             }
@@ -128,7 +152,7 @@
             $files = glob('components/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = 'dist/components/' . basename($pvueFile, '.pvue') . '.php';
-                $phpCode = convert_pvue_file($pvueFile, false);
+                $phpCode = convert_pvue_file($pvueFile, false, $pvueFile); // ADD filename parameter
                 file_put_contents($phpFile, $phpCode);
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
             }
@@ -136,10 +160,15 @@
             $files = glob('views/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = 'dist/pages/' . basename($pvueFile, '.pvue') . '.php';
-                $phpCode = convert_pvue_file($pvueFile, false);
+                $phpCode = convert_pvue_file($pvueFile, false, $pvueFile); // ADD filename parameter
                 file_put_contents($phpFile, $phpCode);
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
             }
+
+            // ADD THIS: Generate AJAX files after all compilation
+            $converter = get_phpue_converter();
+            $converter->generateAjaxFiles();
+            echo "✅ Generated AJAX handler files\n";
         }
 
         public function injectHotReloadScript() {

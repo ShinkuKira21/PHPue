@@ -1,25 +1,80 @@
-<script>
-    $routes = phpue_navigation();
-    $routes = array_reverse($routes, true);
-</script>
-
 <template>
-    <nav class="navbar navbar-expand-lg bg-light">
-        <div class="container">
-            <a class="navbar-brand" href=""><img alt="Free Frontend Logo" class="img-fluid" height="" src="https://freefrontend.dev/wp-content/uploads/free-frontend-logo.png" width="300"></a> <button aria-controls="navbarSupportedContent9" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-bs-target="#navbarSupportedContent9" data-bs-toggle="collapse" type="button"><span class="navbar-toggler-icon"></span></button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent9">
-                <form class="d-flex align-items-center position-relative ms-lg-3">
-                    <div class="input-group align-items-center mt-3 mt-lg-0">
-                        <input aria-describedby="button-addon2" aria-label="Search" class="form-control" placeholder="Search" type="text"> <button class="btn bg-white border" id="button-addon2" type="button"><svg class="bi bi-search" fill="currentColor" height="20" viewbox="0 0 16 16" width="20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"></path></svg></button>
+    <!-- Mint Theme Navigation -->
+    <nav class="bg-emerald-500 shadow-lg border-b border-emerald-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                    <div class="text-white font-bold text-2xl tracking-tight">PHPue</div>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="/" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Home</a>
+                        <a href="/about" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">About</a>
+                        <a href="#" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Features</a>
+                        <a href="#" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Docs</a>
+                        <a href="#" class="bg-white text-emerald-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-50 transition-colors duration-200 shadow-sm">Get Started</a>
                     </div>
-                </form>
-                <ul class="navbar-nav ms-auto my-2 my-lg-0">
-                    <li p-for="$route in $routes" class="nav-item me-4">
-                        <a class="nav-link" href="{{ $route['url'] }}">{{ $route['title'] }}</a>
-                    </li>
-                </ul>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" class="bg-emerald-500 inline-flex items-center justify-center p-2 rounded-md text-emerald-100 hover:text-white hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-500" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <!-- Hamburger icon -->
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu (Hidden by default) -->
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-emerald-600">
+                <a href="/" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</a>
+                <a href="/about" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">About</a>
+                <a href="#" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Features</a>
+                <a href="#" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Docs</a>
+                <a href="#" class="bg-white text-emerald-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-emerald-50 shadow-sm">Get Started</a>
             </div>
         </div>
     </nav>
 </template>
+
+<cscript>
+    // Mobile menu toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuButton = document.querySelector('[aria-controls="mobile-menu"]');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', function() {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.classList.toggle('hidden');
+                
+                // Toggle hamburger icon
+                const icon = this.querySelector('svg');
+                if (!isExpanded) {
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+                } else {
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />';
+                }
+            });
+        }
+        
+        // Close mobile menu when clicking on links
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                mobileMenuButton.setAttribute('aria-expanded', 'false');
+                mobileMenuButton.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />';
+            });
+        });
+    });
+</cscript>
