@@ -64,11 +64,8 @@
                 $content = file_get_contents($sourceFile);
                 $converter = get_phpue_converter();
                 
-                // Pre-process to extract AJAX data (but don't execute)
                 $converter->preProcessForAjax($content, $sourceFile);
                 
-                // Store the processed PHP code for later execution
-                // FIX: Pass the filename parameter here!
                 $GLOBALS['phpue_current_page_code'] = $converter->convertPVueToPHP($content, false, $sourceFile);
                 return true;
             }
@@ -159,7 +156,6 @@
 
         public function convertPVueToPHP($pvueContent, $bRoot = false, $fileName = '') {
             $this->currentPageName = basename($fileName, '.pvue');
-            // Debug: make sure we have the right page name
             if (empty($this->currentPageName)) {
                 error_log("Warning: Empty page name for file: $fileName");
             }
@@ -169,7 +165,6 @@
                 $script = $this->extractBetween($pvueContent, '<script>', '</script>');
             }
 
-            // Process AJAX annotations in EVERY component
             $script = $this->processAjaxAnnotations($script, $this->currentPageName);
 
             $header = $this->extractBetween($pvueContent, '<header>', '</header>');
@@ -219,7 +214,6 @@
                 $script = $this->extractBetween($pvueContent, '<script>', '</script>');
             }
             
-            // Process AJAX annotations but don't output anything
             $this->processAjaxAnnotations($script, $this->currentPageName);
             
             return $this;
@@ -238,16 +232,11 @@
             $this->ajaxHandlingCode = $handling;
         }
 
-        /**
-         * Process @AJAX annotations - Collect from all components
-         */
         private function processAjaxAnnotations($scriptContent, $pageName) {
-            // Initialize arrays for this page if they don't exist
             if (!isset($this->ajaxFunctions[$pageName])) {
                 $this->ajaxFunctions[$pageName] = [];
             }
             
-            // Extract @AJAX functions
             if (preg_match_all('/@AJAX\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
                 foreach ($matches[1] as $ajaxFunction) {
                     if (preg_match('/function\s+(\w+)/', $ajaxFunction, $funcMatch)) {
@@ -255,14 +244,11 @@
                         $this->ajaxFunctions[$pageName][$functionName] = trim($ajaxFunction);
                     }
                 }
-                // Remove @AJAX functions from this component's script
                 $scriptContent = preg_replace('/@AJAX\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '// @AJAX function moved to ajax file', $scriptContent);
             }
             
-            // Extract AJAX calling logic
             if (preg_match('/(\$input\s*=\s*json_decode\([^;]+;[^if]+if\s*\(\s*isset\(\$input\[\'action\'\]\)[^)]+\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
                 $this->ajaxHandlingCode[$pageName] = trim($matches[1]);
-                // Remove AJAX calling logic from this component's script
                 $scriptContent = str_replace($matches[1], '// AJAX calling logic moved to ajax file', $scriptContent);
             }
             
@@ -276,10 +262,8 @@
             }
             
             foreach ($this->ajaxFunctions as $pageName => $functions) {
-                // Skip if pageName is empty
                 if (empty($pageName)) continue;
                 
-                // Allow: views (index, about, etc.) AND App
                 $isView = false;
                 foreach ($this->routing->routes as $routeName => $route) {
                     if ($routeName === $pageName) {
@@ -291,18 +275,16 @@
                 $isApp = ($pageName === 'App');
                 
                 if (!$isView && !$isApp) {
-                    continue; // Skip components (Navbar, etc.) and other files
+                    continue;
                 }
                 
                 $ajaxContent = "<?php\n";
                 $ajaxContent .= "// AJAX handlers for $pageName\n";
                 
-                // Add functions
                 foreach ($functions as $functionName => $functionCode) {
                     $ajaxContent .= $functionCode . "\n\n";
                 }
                 
-                // Add AJAX calling logic for this page
                 if (isset($this->ajaxHandlingCode[$pageName])) {
                     $ajaxContent .= "// AJAX/POST Request Handling for $pageName\n";
                     $ajaxContent .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
@@ -463,7 +445,6 @@
         private function convertVueSyntax($template) {
             $template = preg_replace('/<header>.*?<\/header>/s', '', $template);
             
-            // Step 1: Convert p-for to php-for
             $template = preg_replace_callback('/p-for="(\$.*?) in (\$.*?)"/', 
                 function($matches) {
                     $item = trim($matches[1]);
@@ -472,14 +453,13 @@
                 }, 
                 $template);
             
-            // Step 2: Process loops on the ENTIRE template (not line by line)
             $template = preg_replace_callback(
                 '/<(\w+)([^>]*)php-for="(\$[^"]+) in (\$[^"]+)"([^>]*)>([\s\S]*?)<\/\1>/',
                 function($matches) {
                     $tag = $matches[1];
                     $item = trim($matches[3]); 
                     $array = trim($matches[4]);
-                    $content = $matches[6]; // The content between opening and closing tags
+                    $content = $matches[6]; 
                     
                     return "<?php if(isset($array) && is_array($array)): foreach($array as $item): ?>" .
                         "<$tag{$matches[2]}{$matches[5]}>$content</$tag>" .
@@ -488,7 +468,6 @@
                 $template
             );
             
-            // Step 3: Process template variables
             $template = preg_replace('/\{\{\s*(\$.*?)\s*\}\}/', '<?= htmlspecialchars($1 ?? "") ?>', $template);
             
             $template = preg_replace_callback('/p-model="(\$[^"]*)"/', 
@@ -556,7 +535,6 @@
             $output = "<?php\n";
                 
             if ($bRoot) {
-                // Auto session management
                 if (!str_contains($script, 'session_start()')) {
                     $output .= "// Auto session management\n";
                     $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
@@ -572,24 +550,19 @@
                 $output .= "        require_once \$ajaxFile;\n";
                 $output .= "    }\n";
                 $output .= "} else {\n";
-                $output .= "    // Development/Runtime mode: Inject AJAX code directly\n";
                 
-                // Inject all AJAX functions
                 foreach ($this->ajaxFunctions as $pageName => $functions) {
                     foreach ($functions as $functionName => $functionCode) {
                         $output .= "    " . str_replace("\n", "\n    ", $functionCode) . "\n\n";
                     }
                 }
-                $output .= "}\n\n"; // Close the else block here
+                $output .= "}\n\n";
 
-                // 🚨 MOVE THE AJAX HANDLING OUTSIDE THE CONDITIONAL
-                $output .= "// AJAX/POST Request Handling (runs in both modes)\n";
                 $output .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
                 foreach ($this->ajaxHandlingCode as $pageName => $ajaxCode) {
                     $indentedAjaxCode = preg_replace('/^/m', '    ', $ajaxCode);
                     $output .= $indentedAjaxCode;
                 }
-                $output .= "    // Exit after AJAX processing to prevent page render\n";
                 $output .= "    exit;\n";
                 $output .= "}\n\n";
             }
@@ -606,12 +579,9 @@
                 $output .= "<html>\n";
                 $output .= "<head>\n";
                 
-                // Load ALL headers upfront - App.pvue headers + current view headers
                 $output .= "<?php\n";
-                $output .= "// Start with App.pvue header\n";
                 $output .= "echo \$phpue_header ?? '';\n";
                 $output .= "\n";
-                $output .= "// Add current view header\n";
                 $output .= "\$routing = get_phpue_routing();\n";
                 $output .= "\$current_route = \$_GET['page'] ?? 'index';\n";
                 $output .= "\$route_meta = \$routing->getRouteMeta(\$current_route);\n";
@@ -654,7 +624,7 @@
         }
         
         $content = file_get_contents($pvueFilePath);
-        return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath); // ADD filename parameter
+        return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath);
     }
 
     function get_phpue_routing() {
@@ -670,11 +640,9 @@
                 }
             }
             
-            // PRE-PROCESS THE CURRENT PAGE to collect AJAX data
-            // MODIFY this line:
             $currentRoute = $_GET['page'] ?? 'index';
             $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
-            $routing->preProcessCurrentPage($sourceFile); // ADD filename parameter
+            $routing->preProcessCurrentPage($sourceFile);
         }
         return $converter->getRouting();
     }
