@@ -34,6 +34,9 @@
             if (!is_dir($distDir)) {
                 mkdir($distDir, 0755, true);
             }
+            if (!is_dir($distDir . '/assets')) {
+                mkdir($distDir . '/assets', 0755, true);
+            }
             if (!is_dir($distDir . '/components')) {
                 mkdir($distDir . '/components', 0755, true);
             }
@@ -165,6 +168,47 @@
             $converter = get_phpue_converter();
             $converter->generateAjaxFiles();
             echo "✅ Generated AJAX handler files\n";
+
+            $this->copyAssetsToDist();
+        }
+
+        private function copyAssetsToDist() {
+            $assetsDir = 'assets';
+            $distAssetsDir = 'dist/assets';
+            
+            if (!is_dir($distAssetsDir)) {
+                mkdir($distAssetsDir, 0755, true);
+            }
+            
+            if (is_dir($assetsDir)) {
+                $this->copyDirectory($assetsDir, $distAssetsDir);
+                echo "✅ Copied assets to dist/assets/\n";
+            } else {
+                echo "ℹ️ No assets directory found\n";
+            }
+        }
+
+        private function copyDirectory($source, $destination) {
+            if (!is_dir($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+            
+            foreach ($iterator as $item) {
+                $target = $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+                
+                if ($item->isDir()) {
+                    if (!is_dir($target)) {
+                        mkdir($target, 0755, true);
+                    }
+                } else {
+                    copy($item->getPathname(), $target);
+                }
+            }
         }
 
         public function injectHotReloadScript() {

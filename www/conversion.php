@@ -248,12 +248,12 @@
                         ];
                     }
                 }
-                $scriptContent = preg_replace('/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '// @AJAX function moved to ajax file', $scriptContent);
+                $scriptContent = preg_replace('/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '', $scriptContent);
             }
             
             if (preg_match('/(\$input\s*=\s*json_decode\([^;]+;[^if]+if\s*\(\s*isset\(\$input\[\'action\'\]\)[^)]+\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
                 $this->ajaxHandlingCode[$pageName] = trim($matches[1]);
-                $scriptContent = str_replace($matches[1], '// AJAX calling logic moved to ajax file', $scriptContent);
+                $scriptContent = str_replace($matches[1], '', $scriptContent);
             }
             
             return $scriptContent;
@@ -286,7 +286,7 @@
                 $ajaxContent .= "// AJAX handlers for $pageName\n";
                 
                 foreach ($functions as $functionName => $functionData) {
-                    $ajaxContent .= $functionData['code'] . "\n\n"; // FIXED: Use ['code'] instead of direct array
+                    $ajaxContent .= $functionData['code'] . "\n\n";
                 }
                 
                 if (isset($this->ajaxHandlingCode[$pageName])) {
@@ -481,44 +481,62 @@
                 }, 
                 $template);
             
-            $template = preg_replace_callback('/p-if="([^"]*)"/', 
-                function($matches) {
-                    $condition = trim($matches[1]);
-                    return "php-if=\"$condition\"";
-                }, 
-                $template);
+            $template = $this->convertPIfWithStack($template);
             
-            $pIfStack = [];
+            return $template;
+        }
+
+        private function convertPIfWithStack($template) {
             $lines = explode("\n", $template);
             $output = [];
+            $pIfStack = [];
             
-            foreach ($lines as $line) {
-                if (preg_match('/<(\w+)([^>]*) php-if="([^"]*)"([^>]*)>/', $line, $matches)) {
+            foreach ($lines as $lineNumber => $line) {
+                if (preg_match('/<(\w+)([^>]*)\s+p-if="([^"]*)"([^>]*)>/', $line, $matches)) {
                     $tag = $matches[1];
-                    $condition = trim($matches[3]);
+                    $attrs = $matches[2] . $matches[4];
+                    $condition = $matches[3];
                     
-                    $pIfStack[] = $tag;
-                    $line = preg_replace('/php-if="[^"]+"/', '', $line);
-                    $line = "<?php if($condition): ?>" . $line;
+                    $cleanAttrs = preg_replace('/\s+p-if="[^"]*"/', '', $attrs);
+                    
+                    $pIfStack[] = [
+                        'tag' => $tag,
+                        'condition' => $condition,
+                        'attrs' => $cleanAttrs,
+                        'startLine' => count($output), 
+                        'depth' => 1
+                    ];
+                    
+                    $output[] = "<?php if($condition): ?>";
+                    $output[] = "<$tag$cleanAttrs>";
+                    continue;
                 }
-                
-                if (preg_match('/<\/(\w+)>/', $line, $matches)) {
-                    $closingTag = $matches[1];
+
+                if (!empty($pIfStack)) {
+                    $currentPIf = &$pIfStack[count($pIfStack) - 1];
+                    $currentTag = $currentPIf['tag'];
                     
-                    if (!empty($pIfStack) && $closingTag === end($pIfStack)) {
-                        array_pop($pIfStack);
-                        $line = $line . "<?php endif; ?>";
+                    if (preg_match("/<" . $currentTag . "[^>]*>/", $line) && !preg_match("/<\/" . $currentTag . ">/", $line)) {
+                        $currentPIf['depth']++;
+                    }
+                    
+                    if (preg_match("/<\/" . $currentTag . ">/", $line)) {
+                        $currentPIf['depth']--;
+                        
+                        if ($currentPIf['depth'] === 0) {
+                            $output[] = $line;
+                            $output[] = "<?php endif; ?>";
+                            array_pop($pIfStack);
+                            continue;
+                        }
                     }
                 }
                 
                 $output[] = $line;
             }
             
-            $template = implode("\n", $output);
-            
-            return $template;
+            return implode("\n", $output);
         }
-
 
         private function handleCscript($cscript) {
             if (empty($cscript)) return '';
@@ -532,7 +550,13 @@
                 $cscript
             );
             
-            return "<script>\n" . $cscript . "\n</script>";
+            $isModule = preg_match('/^\s*(import|export)\s+/m', $cscript);
+            
+            if ($isModule) {
+                return "<script type=\"module\">\n" . $cscript . "\n</script>";
+            } else {
+                return "<script>\n" . $cscript . "\n</script>";
+            }
         }
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
@@ -554,12 +578,9 @@
                 $output .= "        require_once \$ajaxFile;\n";
                 $output .= "    }\n";
                 
-                // Check if we're in build mode
                 if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {
-                    // Build mode: don't include the else block (functions are in separate files)
                     $output .= "}\n";
                 } else {
-                    // Development mode: include the else block with functions
                     $output .= "} else {\n";
                     $output .= "    // Development mode: Load AJAX functions directly\n";
                     
@@ -573,7 +594,6 @@
 
                 $output .= "\n";
                 
-                // MOVE AJAX HANDLING TO THE TOP - before routing logic
                 $output .= "// Handle AJAX requests (must be before routing)\n";
                 $output .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST' || \$_SERVER['REQUEST_METHOD'] === 'GET') {\n";
                 $output .= "    \$input = [];\n";
@@ -593,7 +613,6 @@
                 $output .= "    }\n";
                 $output .= "}\n\n";
 
-                // Now add the routing logic AFTER AJAX handling
                 $output .= $script . "\n";
             }
                                             
