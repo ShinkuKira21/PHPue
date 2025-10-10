@@ -1,3 +1,4 @@
+<!-- Author: Edward Patch -->
 <?php
     class PHPRouting {
         public $routes = [];
@@ -214,7 +215,8 @@
                 $script = $this->extractBetween($pvueContent, '<script>', '</script>');
             }
             
-            $this->processAjaxAnnotations($script, $this->currentPageName);
+            // Process AJAX annotations and store the result
+            $processedScript = $this->processAjaxAnnotations($script, $this->currentPageName);
             
             return $this;
         }
@@ -237,26 +239,96 @@
                 $this->ajaxFunctions[$pageName] = [];
             }
             
-            if (preg_match_all('/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
-                foreach ($matches[2] as $index => $ajaxFunction) {
-                    $httpMethod = $matches[1][$index];
-                    if (preg_match('/function\s+(\w+)/', $ajaxFunction, $funcMatch)) {
-                        $functionName = $funcMatch[1];
-                        $this->ajaxFunctions[$pageName][$functionName] = [
-                            'code' => trim($ajaxFunction),
-                            'method' => $httpMethod
-                        ];
+            // Find all @AJAX annotations
+            $pattern = '/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\))\s*\{/s';
+            
+            if (preg_match_all($pattern, $scriptContent, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+                $functionsToRemove = [];
+                
+                foreach ($matches as $match) {
+                    $httpMethod = $match[1][0];
+                    $functionHeader = $match[2][0];
+                    $functionStartPos = $match[0][1]; // Start of the entire match
+                    $bracePos = $functionStartPos + strlen($match[0][0]); // Position after the opening brace
+                    
+                    // Extract the complete function body (starting from after the opening brace)
+                    $functionBody = $this->extractCompleteFunctionBody($scriptContent, $bracePos);
+                    
+                    if ($functionBody) {
+                        $completeFunction = $functionHeader . " {\n" . $functionBody . "\n}";
+                        
+                        // Extract function name
+                        if (preg_match('/function\s+(\w+)/', $completeFunction, $funcNameMatch)) {
+                            $functionName = $funcNameMatch[1];
+                            
+                            // Store the AJAX function
+                            $this->ajaxFunctions[$pageName][$functionName] = [
+                                'code' => trim($completeFunction),
+                                'method' => $httpMethod
+                            ];
+                            
+                            // Mark this function for removal (from @AJAX to end of function)
+                            $functionsToRemove[] = [
+                                'start' => $functionStartPos,
+                                'end' => $bracePos + strlen($functionBody) + 1 // +1 for the closing brace
+                            ];
+                        }
                     }
                 }
-                $scriptContent = preg_replace('/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\)\s*\{[^}]+\})/s', '', $scriptContent);
-            }
-            
-            if (preg_match('/(\$input\s*=\s*json_decode\([^;]+;[^if]+if\s*\(\s*isset\(\$input\[\'action\'\]\)[^)]+\)\s*\{[^}]+\})/s', $scriptContent, $matches)) {
-                $this->ajaxHandlingCode[$pageName] = trim($matches[1]);
-                $scriptContent = str_replace($matches[1], '', $scriptContent);
+                
+                // Remove all found AJAX functions from the script content
+                usort($functionsToRemove, function($a, $b) {
+                    return $b['start'] - $a['start'];
+                });
+                
+                foreach ($functionsToRemove as $remove) {
+                    $length = $remove['end'] - $remove['start'];
+                    $scriptContent = substr_replace($scriptContent, '', $remove['start'], $length);
+                }
             }
             
             return $scriptContent;
+        }
+
+        private function extractCompleteFunctionBody($content, $startAfterBrace) {
+            $braceCount = 1; // We start with 1 because we're after the opening brace
+            $inString = false;
+            $stringChar = '';
+            $pos = $startAfterBrace;
+            $length = strlen($content);
+            $bodyStart = $pos;
+            
+            while ($pos < $length && $braceCount > 0) {
+                $char = $content[$pos];
+                
+                // Handle strings to avoid counting braces inside strings
+                if ($char === '"' || $char === "'") {
+                    if (!$inString) {
+                        $inString = true;
+                        $stringChar = $char;
+                    } elseif ($stringChar === $char && $content[$pos-1] !== '\\') {
+                        $inString = false;
+                    }
+                }
+                
+                if (!$inString) {
+                    if ($char === '{') {
+                        $braceCount++;
+                    } elseif ($char === '}') {
+                        $braceCount--;
+                    }
+                }
+                
+                $pos++;
+                
+                // If we found the matching closing brace for our initial opening brace
+                if ($braceCount === 0) {
+                    // Return everything up to but NOT including the closing brace
+                    return substr($content, $bodyStart, $pos - $bodyStart - 1);
+                }
+            }
+            
+            return null;
         }
 
         public function generateAjaxFiles() {
