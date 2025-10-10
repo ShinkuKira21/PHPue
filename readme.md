@@ -1,5 +1,17 @@
+**Keep Building, Even When Things Break**
+This framework works fully out of the box. While there may still be occasional bugs related to new features—such as custom p-directives or {{ }} variable echoing—you can always fall back to traditional PHP as a temporary workaround.
+
+This flexibility is a game-changer. It allows development to continue smoothly without rushing features, giving developers room to explore a more modular approach to PHP coding.
+
 **PHPue Framework 🚀**
-A powerful PHP framework that brings Vue-inspired syntax to server-side rendering with hot reload, component system, and seamless PHP-JavaScript integration.
+A powerful PHP framework that brings Vue-inspired syntax to server-side rendering with hot reload, component system, and seamless PHP-JavaScript integration. 
+
+*It’s like Node, but without the ```node_modules```!*
+
+**Getting started is easy:**
+Just clone the repo and grab two files — ```conversion.php``` and ```index.php```. That’s it. You’re ready to build.
+
+Use it with XAMPP, PHP CLI, Docker Compose, or even upload directly via FTP. Watch your web application come to life with minimal setup and maximum flexibility.
 
 **🌟 What is PHPue?**
 PHPue combines the simplicity of PHP with Vue-like templating syntax to create fast, scalable web applications with server-side rendering. It offers the developer experience of modern frameworks with the performance and simplicity of traditional PHP.
@@ -24,6 +36,25 @@ PHPue combines the simplicity of PHP with Vue-like templating syntax to create f
         link.addEventListener('click', handleNavigation);
     });
 </cscript>
+```
+
+**Vue's Style Setup Tag**
+- Set up calls and ensures PHP session is started.
+- Only needs to be called in App.vue, unless you need to ensure the session is started.
+- setup tag is not required in views or components.
+- Another use is setup only being used in views, so you make scoped session starts!
+- Unless you are using global AJAX functions that rely on the session!
+```html
+<script setup>
+
+</script>
+```
+
+Alternative:
+```html
+<script>
+
+</script>
 ```
 
 **📦 Import System**
@@ -104,7 +135,7 @@ Component Importing
 </template>
 ```
 
-**p-model** - Two-Way Data Binding
+**p-model** - Two-Way Data Binding (NOT IMPLEMENTED, BUT HAVE PLANS ON HOW!)
 
 ```html
 <template>
@@ -142,6 +173,33 @@ Component Importing
         // Process form data...
     }
 </script>
+```
+
+IF any p-directive doesn't work, or you required PHP functions in template, for example v-if or v-for breaks in certain ways, due to the early stages of the framework, you can use PHP-style coding instead of v-if, v-for and {{ }}.
+
+Our framework doesn't butcher PHP, JS, or HTML, we just enhance it. (PHP is allowed in all taglines, HTML and JS are not! This helps us understand what parts are SSR, and when we will require JS Client Side Rendering.
+
+You can use this instead:-
+
+```php
+<script>
+    $fruits = [Banana, Apple, Pears];
+</script>
+
+<template>
+    <div>
+        <?php
+            foreach($fruits as $fruit) {
+                echo "<p>".$fruit."</p>";
+            }
+        ?>
+    </div>
+
+    <!-- or if you needed to echo PHP variable because {{ $fruits }} doesn't handle array imploding (and I believe functions don't yet work, it's just simply designed to echo the variable). -->
+    <div>
+        <?= implode(', ', $fruits); ?>
+    </div>
+</template>
 ```
 
 **📄 File Structure**
@@ -227,15 +285,16 @@ App.pvue (Root Component)
 </cscript>
 ```
 
+# Visit: http://localhost:3000/
 **🔥 Hot Reload Development**
-
+🚀 Production Runtime
 ```bash
-# Start development server with hot reload
+# Start development/production-ready server with hot reload
 php index.php
 ```
 
 # Visit: http://localhost:3000/
-# Changes to .pvue files automatically reload the page!
+# Converts .pvue files to .php files, and creates a dist/
 🚀 Production Build
 ```bash
 # Compile all .pvue files to .php for production
