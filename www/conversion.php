@@ -237,7 +237,6 @@
                 $this->ajaxFunctions[$pageName] = [];
             }
 
-            // Find all @AJAX annotations
             $pattern = '/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\))\s*\{/s';
             
             if (preg_match_all($pattern, $scriptContent, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
@@ -249,7 +248,6 @@
                     $annotationStartPos = $match[0][1];
                     $bracePos = $annotationStartPos + strlen($match[0][0]);
                     
-                    // Extract the complete function body with proper brace counting
                     $functionBody = $this->extractCompleteFunctionBody($scriptContent, $bracePos);
                     
                     if ($functionBody !== null) {
@@ -263,9 +261,8 @@
                                 'method' => $httpMethod
                             ];
                             
-                            // Mark for removal
                             $fullFunctionStart = $annotationStartPos;
-                            $fullFunctionEnd = $bracePos + strlen($functionBody) + 1; // +1 for the closing brace
+                            $fullFunctionEnd = $bracePos + strlen($functionBody) + 1;
                             
                             $functionsToRemove[] = [
                                 'start' => $fullFunctionStart,
@@ -276,9 +273,8 @@
                     }
                 }
                 
-                // Remove all found AJAX functions from the script content
                 usort($functionsToRemove, function($a, $b) {
-                    return $b['start'] - $a['start']; // Remove from end to start to preserve positions
+                    return $b['start'] - $a['start'];
                 });
                 
                 foreach ($functionsToRemove as $remove) {
@@ -292,44 +288,40 @@
         }
 
         private function extractCompleteFunctionBody($content, $startAfterBrace) {
-            $braceCount = 1; // Start with 1 for the opening brace we're after
+            $braceCount = 1;
             $pos = $startAfterBrace;
             $length = strlen($content);
             
             while ($pos < $length && $braceCount > 0) {
                 $char = $content[$pos];
                 
-                // Handle strings
                 if ($char === '"' || $char === "'") {
                     $stringChar = $char;
-                    $pos++; // Move past opening quote
+                    $pos++;
                     
                     while ($pos < $length) {
-                        // Check for escaped quotes
                         if ($content[$pos] === '\\') {
-                            $pos += 2; // Skip escape sequence
+                            $pos += 2;
                             continue;
                         }
                         
                         if ($content[$pos] === $stringChar) {
-                            break; // Found closing quote
+                            break;
                         }
                         $pos++;
                     }
                 }
-                // Handle comments
+
                 elseif ($char === '/' && $pos + 1 < $length) {
                     $nextChar = $content[$pos + 1];
                     
                     if ($nextChar === '/') {
-                        // Line comment - skip to end of line
                         $pos += 2;
                         while ($pos < $length && $content[$pos] !== "\n") {
                             $pos++;
                         }
                     }
                     elseif ($nextChar === '*') {
-                        // Block comment - skip to */
                         $pos += 2;
                         while ($pos < $length - 1) {
                             if ($content[$pos] === '*' && $content[$pos + 1] === '/') {
@@ -340,7 +332,7 @@
                         }
                     }
                 }
-                // Count braces (only when not in strings/comments)
+
                 else {
                     if ($char === '{') {
                         $braceCount++;
@@ -348,9 +340,7 @@
                     elseif ($char === '}') {
                         $braceCount--;
                         
-                        // If we found the matching closing brace
                         if ($braceCount === 0) {
-                            // Extract from startAfterBrace to current position (excluding the closing brace)
                             $bodyLength = $pos - $startAfterBrace;
                             return substr($content, $startAfterBrace, $bodyLength);
                         }
@@ -360,9 +350,9 @@
                 $pos++;
             }
             
-            return null; // Unbalanced braces
+            return null;
         }
-        
+
         public function generateAjaxFiles() {
             $ajaxDir = 'dist/ajax';
             if (!is_dir($ajaxDir)) {
