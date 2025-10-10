@@ -1,9 +1,11 @@
 **Keep Building, Even When Things Break**
+
 This framework works fully out of the box. While there may still be occasional bugs related to new features—such as custom p-directives or {{ }} variable echoing—you can always fall back to traditional PHP as a temporary workaround.
 
 This flexibility is a game-changer. It allows development to continue smoothly without rushing features, giving developers room to explore a more modular approach to PHP coding.
 
 **PHPue Framework 🚀**
+
 A powerful PHP framework that brings Vue-inspired syntax to server-side rendering with hot reload, component system, and seamless PHP-JavaScript integration. 
 
 *It’s like Node, but without the ```node_modules```!*
