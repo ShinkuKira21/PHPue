@@ -34,11 +34,17 @@
             if (!is_dir($distDir)) {
                 mkdir($distDir, 0755, true);
             }
+            if (!is_dir($distDir . '/assets')) {
+                mkdir($distDir . '/assets', 0755, true);
+            }
             if (!is_dir($distDir . '/components')) {
                 mkdir($distDir . '/components', 0755, true);
             }
             if (!is_dir($distDir . '/pages')) {
                 mkdir($distDir . '/pages', 0755, true);
+            }
+            if (!is_dir($distDir . '/ajax')) {
+                mkdir($distDir . '/ajax', 0755, true);
             }
         }
 
@@ -99,28 +105,46 @@
             $appPVue = 'App.pvue';
             
             if(file_exists($appPVue)) {
+                $this->preProcessAllViewsForAjax();
+
                 $phpCode = convert_pvue_file($appPVue, true);
+
                 eval('?>' . $phpCode);
             } else {
                 http_response_code(500);
                 echo "Error: App.pvue not found";
             }
         }
-
-        private function compileViewOnDemand($viewPath) {
-            if (file_exists($viewPath)) {
-                $phpCode = convert_pvue_file($viewPath, false);
-                eval('?>' . $phpCode);
-                return true;
+        
+        private function preProcessAllViewsForAjax() {
+            $converter = get_phpue_converter();
+            
+            if (file_exists('App.pvue')) {
+                $content = file_get_contents('App.pvue');
+                $converter->preProcessForAjax($content, 'App.pvue');
             }
-            return false;
+            
+            $views = glob('views/*.pvue');
+            foreach ($views as $view) {
+                $content = file_get_contents($view);
+                $converter->preProcessForAjax($content, $view);
+            }
+            
+            $components = glob('components/*.pvue');
+            foreach ($components as $component) {
+                $content = file_get_contents($component);
+                $converter->preProcessForAjax($content, $component);
+            }
         }
 
         private function compileAllFiles() {
+            $this->ensureDistDirectory();
+            
             $appPVue = 'App.pvue';
             $appPHP = 'dist/App.php';
             if(file_exists($appPVue)) {
-                $phpCode = convert_pvue_file($appPVue, true);
+                $this->preProcessAllViewsForAjax();
+                $phpCode = convert_pvue_file($appPVue, true, $appPVue);
                 file_put_contents($appPHP, $phpCode);
                 echo "✅ Compiled: $appPVue -> $appPHP\n";
             }
@@ -128,7 +152,7 @@
             $files = glob('components/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = 'dist/components/' . basename($pvueFile, '.pvue') . '.php';
-                $phpCode = convert_pvue_file($pvueFile, false);
+                $phpCode = convert_pvue_file($pvueFile, false, $pvueFile);
                 file_put_contents($phpFile, $phpCode);
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
             }
@@ -136,9 +160,54 @@
             $files = glob('views/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = 'dist/pages/' . basename($pvueFile, '.pvue') . '.php';
-                $phpCode = convert_pvue_file($pvueFile, false);
+                $phpCode = convert_pvue_file($pvueFile, false, $pvueFile);
                 file_put_contents($phpFile, $phpCode);
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
+            }
+
+            $converter = get_phpue_converter();
+            $converter->generateAjaxFiles();
+            echo "✅ Generated AJAX handler files\n";
+
+            $this->copyAssetsToDist();
+        }
+
+        private function copyAssetsToDist() {
+            $assetsDir = 'assets';
+            $distAssetsDir = 'dist/assets';
+            
+            if (!is_dir($distAssetsDir)) {
+                mkdir($distAssetsDir, 0755, true);
+            }
+            
+            if (is_dir($assetsDir)) {
+                $this->copyDirectory($assetsDir, $distAssetsDir);
+                echo "✅ Copied assets to dist/assets/\n";
+            } else {
+                echo "ℹ️ No assets directory found\n";
+            }
+        }
+
+        private function copyDirectory($source, $destination) {
+            if (!is_dir($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+            
+            foreach ($iterator as $item) {
+                $target = $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+                
+                if ($item->isDir()) {
+                    if (!is_dir($target)) {
+                        mkdir($target, 0755, true);
+                    }
+                } else {
+                    copy($item->getPathname(), $target);
+                }
             }
         }
 
@@ -190,6 +259,8 @@
     $server = new PHPueServer();
 
     if (isset($_GET['build']) || (isset($argv[1]) && $argv[1] === 'build')) {
+        define('PHPUE_BUILD_MODE', true);
+
         $server->build();
         exit;
     }

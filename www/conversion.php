@@ -54,19 +54,32 @@
             return $this->routes[$routeName]['header'] ?? [];
         }
         
-        public function getCurrentPageContent() {
-            $currentRoute = $_GET['page'] ?? 'index';
-            $sourceFile = $this->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+        public function preProcessCurrentPage($sourceFile = null) {
+            if ($sourceFile === null) {
+                $currentRoute = $_GET['page'] ?? 'index';
+                $sourceFile = $this->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+            }
             
             if (file_exists($sourceFile)) {
-                ob_start();
                 $content = file_get_contents($sourceFile);
-                $converter = new PHPueConverter();
-                $phpCode = $converter->convertPVueToPHP($content, false);
-                eval('?>' . $phpCode);
+                $converter = get_phpue_converter();
+                
+                $converter->preProcessForAjax($content, $sourceFile);
+                
+                $GLOBALS['phpue_current_page_code'] = $converter->convertPVueToPHP($content, false, $sourceFile);
+                return true;
+            }
+            return false;
+        }
+        
+        public function getCurrentPageContent() {
+            if (isset($GLOBALS['phpue_current_page_code'])) {
+                ob_start();
+                eval('?>' . $GLOBALS['phpue_current_page_code']);
                 return ob_get_clean();
             }
             
+            $currentRoute = $_GET['page'] ?? 'index';
             return "<div>Page not found: $currentRoute</div>";
         }
         
@@ -131,16 +144,28 @@
 
     class PHPueConverter {   
         private $routing;
-    
+        private $ajaxHandlingCode = [];
+        private $ajaxFunctions = [];
+        private $currentPageName = '';
+        
         public function __construct() {
             $this->routing = new PHPRouting();
+            $this->ajaxHandlingCode = [];
+            $this->ajaxFunctions = []; 
         }
 
-        public function convertPVueToPHP($pvueContent, $bRoot = false) {
+        public function convertPVueToPHP($pvueContent, $bRoot = false, $fileName = '') {
+            $this->currentPageName = basename($fileName, '.pvue');
+            if (empty($this->currentPageName)) {
+                error_log("Warning: Empty page name for file: $fileName");
+            }
+
             $script = $this->extractBetween($pvueContent, '<script setup>', '</script>');
             if (empty(trim($script))) {
                 $script = $this->extractBetween($pvueContent, '<script>', '</script>');
             }
+
+            $script = $this->processAjaxAnnotations($script, $this->currentPageName);
 
             $header = $this->extractBetween($pvueContent, '<header>', '</header>');
             $template = $this->extractBetween($pvueContent, '<template>', '</template>');
@@ -180,6 +205,196 @@
             $output = $this->buildOutput($script, $convertedTemplate, $convertedCscript, $bRoot, $header);
             
             return $output;
+        }
+
+        public function preProcessForAjax($pvueContent, $fileName = '') {
+            $this->currentPageName = basename($fileName, '.pvue');
+            $script = $this->extractBetween($pvueContent, '<script setup>', '</script>');
+            if (empty(trim($script))) {
+                $script = $this->extractBetween($pvueContent, '<script>', '</script>');
+            }
+            
+            $this->processAjaxAnnotations($script, $this->currentPageName);
+            
+            return $this;
+        }
+
+        public function getAjaxFunctions() {
+            return $this->ajaxFunctions;
+        }
+
+        public function getAjaxHandling() {
+            return $this->ajaxHandlingCode;
+        }
+
+        public function setAjaxData($functions, $handling) {
+            $this->ajaxFunctions = $functions;
+            $this->ajaxHandlingCode = $handling;
+        }
+
+        private function processAjaxAnnotations($scriptContent, $pageName) {
+            if (!isset($this->ajaxFunctions[$pageName])) {
+                $this->ajaxFunctions[$pageName] = [];
+            }
+
+            $pattern = '/@AJAX\(\'([^\']+)\'\)\s*(function\s+\w+\([^)]*\))\s*\{/s';
+            
+            if (preg_match_all($pattern, $scriptContent, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER)) {
+                $functionsToRemove = [];
+                
+                foreach ($matches as $match) {
+                    $httpMethod = $match[1][0];
+                    $functionHeader = $match[2][0];
+                    $annotationStartPos = $match[0][1];
+                    $bracePos = $annotationStartPos + strlen($match[0][0]);
+                    
+                    $functionBody = $this->extractCompleteFunctionBody($scriptContent, $bracePos);
+                    
+                    if ($functionBody !== null) {
+                        $completeFunction = $functionHeader . "{" . $functionBody . "}";
+                        
+                        if (preg_match('/function\s+(\w+)/', $completeFunction, $funcNameMatch)) {
+                            $functionName = $funcNameMatch[1];
+                            
+                            $this->ajaxFunctions[$pageName][$functionName] = [
+                                'code' => trim($completeFunction),
+                                'method' => $httpMethod
+                            ];
+                            
+                            $fullFunctionStart = $annotationStartPos;
+                            $fullFunctionEnd = $bracePos + strlen($functionBody) + 1;
+                            
+                            $functionsToRemove[] = [
+                                'start' => $fullFunctionStart,
+                                'end' => $fullFunctionEnd,
+                                'name' => $functionName
+                            ];
+                        }
+                    }
+                }
+                
+                usort($functionsToRemove, function($a, $b) {
+                    return $b['start'] - $a['start'];
+                });
+                
+                foreach ($functionsToRemove as $remove) {
+                    $length = $remove['end'] - $remove['start'];
+                    $replacement = "// AJAX function '{$remove['name']}' handled separately";
+                    $scriptContent = substr_replace($scriptContent, $replacement, $remove['start'], $length);
+                }
+            }
+            
+            return $scriptContent;
+        }
+
+        private function extractCompleteFunctionBody($content, $startAfterBrace) {
+            $braceCount = 1;
+            $pos = $startAfterBrace;
+            $length = strlen($content);
+            
+            while ($pos < $length && $braceCount > 0) {
+                $char = $content[$pos];
+                
+                if ($char === '"' || $char === "'") {
+                    $stringChar = $char;
+                    $pos++;
+                    
+                    while ($pos < $length) {
+                        if ($content[$pos] === '\\') {
+                            $pos += 2;
+                            continue;
+                        }
+                        
+                        if ($content[$pos] === $stringChar) {
+                            break;
+                        }
+                        $pos++;
+                    }
+                }
+
+                elseif ($char === '/' && $pos + 1 < $length) {
+                    $nextChar = $content[$pos + 1];
+                    
+                    if ($nextChar === '/') {
+                        $pos += 2;
+                        while ($pos < $length && $content[$pos] !== "\n") {
+                            $pos++;
+                        }
+                    }
+                    elseif ($nextChar === '*') {
+                        $pos += 2;
+                        while ($pos < $length - 1) {
+                            if ($content[$pos] === '*' && $content[$pos + 1] === '/') {
+                                $pos += 2;
+                                break;
+                            }
+                            $pos++;
+                        }
+                    }
+                }
+
+                else {
+                    if ($char === '{') {
+                        $braceCount++;
+                    }
+                    elseif ($char === '}') {
+                        $braceCount--;
+                        
+                        if ($braceCount === 0) {
+                            $bodyLength = $pos - $startAfterBrace;
+                            return substr($content, $startAfterBrace, $bodyLength);
+                        }
+                    }
+                }
+                
+                $pos++;
+            }
+            
+            return null;
+        }
+
+        public function generateAjaxFiles() {
+            $ajaxDir = 'dist/ajax';
+            if (!is_dir($ajaxDir)) {
+                mkdir($ajaxDir, 0755, true);
+            }
+            
+            foreach ($this->ajaxFunctions as $pageName => $functions) {
+                if (empty($pageName)) continue;
+                
+                $isView = false;
+                foreach ($this->routing->routes as $routeName => $route) {
+                    if ($routeName === $pageName) {
+                        $isView = true;
+                        break;
+                    }
+                }
+                
+                $isApp = ($pageName === 'App');
+                
+                if (!$isView && !$isApp) {
+                    continue;
+                }
+                
+                $ajaxContent = "<?php\n";
+                $ajaxContent .= "// AJAX handlers for $pageName\n";
+                
+                foreach ($functions as $functionName => $functionData) {
+                    $ajaxContent .= $functionData['code'] . "\n\n";
+                }
+                
+                if (isset($this->ajaxHandlingCode[$pageName])) {
+                    $ajaxContent .= "// AJAX/POST Request Handling for $pageName\n";
+                    $ajaxContent .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
+                    $indentedAjaxCode = preg_replace('/^/m', '    ', $this->ajaxHandlingCode[$pageName]);
+                    $ajaxContent .= $indentedAjaxCode;
+                    $ajaxContent .= "}\n";
+                }
+                
+                $ajaxFile = $ajaxDir . "/ajax-$pageName.php";
+                file_put_contents($ajaxFile, $ajaxContent);
+                echo "✅ Generated AJAX: $ajaxFile\n";
+            }
         }
 
         private function injectRoutingLogic($scriptContent) {
@@ -328,8 +543,6 @@
         private function convertVueSyntax($template) {
             $template = preg_replace('/<header>.*?<\/header>/s', '', $template);
             
-            $template = preg_replace('/\{\{\s*(\$.*?)\s*\}\}/', '<?= $1 ?>', $template);
-            
             $template = preg_replace_callback('/p-for="(\$.*?) in (\$.*?)"/', 
                 function($matches) {
                     $item = trim($matches[1]);
@@ -338,68 +551,86 @@
                 }, 
                 $template);
             
-            $template = preg_replace_callback('/p-model="(\$[^"]*)"/', 
+            $template = preg_replace_callback(
+                '/<(\w+)([^>]*)php-for="(\$[^"]+) in (\$[^"]+)"([^>]*)>([\s\S]*?)<\/\1>/',
                 function($matches) {
-                    $variable = trim($matches[1]);
-                    return "name=\"".substr($variable,1)."\" value=\"<?= htmlspecialchars($variable) ?>\"";
-                }, 
-                $template);
-            
-            $template = preg_replace_callback('/p-if="([^"]*)"/', 
-                function($matches) {
-                    $condition = trim($matches[1]);
-                    return "php-if=\"$condition\"";
-                }, 
-                $template);
-            
-            $pForStack = [];
-            $pIfStack = [];
-            
-            $lines = explode("\n", $template);
-            $output = [];
-            
-            foreach ($lines as $line) {
-                if (preg_match('/<(\w+)([^>]*) php-for="(\$[^"]+) in (\$[^"]+)"([^>]*)>/', $line, $matches)) {
                     $tag = $matches[1];
                     $item = trim($matches[3]); 
                     $array = trim($matches[4]);
+                    $content = $matches[6]; 
                     
-                    $pForStack[] = $tag;
-                    $line = preg_replace('/php-for="[^"]+"/', '', $line);
-                    $line = "<?php foreach($array as $item): ?>" . $line;
-                }
-                
-                if (preg_match('/<(\w+)([^>]*) php-if="([^"]*)"([^>]*)>/', $line, $matches)) {
+                    return "<?php if(isset($array) && is_array($array)): foreach($array as $item): ?>" .
+                        "<$tag{$matches[2]}{$matches[5]}>$content</$tag>" .
+                        "<?php endforeach; endif; ?>";
+                },
+                $template
+            );
+            
+            $template = preg_replace('/\{\{\s*(\$.*?)\s*\}\}/', '<?= htmlspecialchars($1 ?? "") ?>', $template);
+            
+            $template = preg_replace_callback('/p-model="(\$[^"]*)"/', 
+                function($matches) {
+                    $variable = trim($matches[1]);
+                    return "name=\"".substr($variable,1)."\" value=\"<?= htmlspecialchars($variable ?? '') ?>\"";
+                }, 
+                $template);
+            
+            $template = $this->convertPIfWithStack($template);
+            
+            return $template;
+        }
+
+        private function convertPIfWithStack($template) {
+            $lines = explode("\n", $template);
+            $output = [];
+            $pIfStack = [];
+            
+            foreach ($lines as $lineNumber => $line) {
+                if (preg_match('/<(\w+)([^>]*)\s+p-if="([^"]*)"([^>]*)>/', $line, $matches)) {
                     $tag = $matches[1];
-                    $condition = trim($matches[3]);
+                    $attrs = $matches[2] . $matches[4];
+                    $condition = $matches[3];
                     
-                    $pIfStack[] = $tag;
-                    $line = preg_replace('/php-if="[^"]+"/', '', $line);
-                    $line = "<?php if($condition): ?>" . $line;
+                    $cleanAttrs = preg_replace('/\s+p-if="[^"]*"/', '', $attrs);
+                    
+                    $pIfStack[] = [
+                        'tag' => $tag,
+                        'condition' => $condition,
+                        'attrs' => $cleanAttrs,
+                        'startLine' => count($output), 
+                        'depth' => 1
+                    ];
+                    
+                    $output[] = "<?php if($condition): ?>";
+                    $output[] = "<$tag$cleanAttrs>";
+                    continue;
                 }
-                
-                if (preg_match('/<\/(\w+)>/', $line, $matches)) {
-                    $closingTag = $matches[1];
+
+                if (!empty($pIfStack)) {
+                    $currentPIf = &$pIfStack[count($pIfStack) - 1];
+                    $currentTag = $currentPIf['tag'];
                     
-                    if (!empty($pIfStack) && $closingTag === end($pIfStack)) {
-                        array_pop($pIfStack);
-                        $line = $line . "<?php endif; ?>";
+                    if (preg_match("/<" . $currentTag . "[^>]*>/", $line) && !preg_match("/<\/" . $currentTag . ">/", $line)) {
+                        $currentPIf['depth']++;
                     }
                     
-                    if (!empty($pForStack) && $closingTag === end($pForStack)) {
-                        array_pop($pForStack);
-                        $line = $line . "<?php endforeach; ?>";
+                    if (preg_match("/<\/" . $currentTag . ">/", $line)) {
+                        $currentPIf['depth']--;
+                        
+                        if ($currentPIf['depth'] === 0) {
+                            $output[] = $line;
+                            $output[] = "<?php endif; ?>";
+                            array_pop($pIfStack);
+                            continue;
+                        }
                     }
                 }
                 
                 $output[] = $line;
             }
             
-            $template = implode("\n", $output);
-            
-            return $template;
+            return implode("\n", $output);
         }
-
 
         private function handleCscript($cscript) {
             if (empty($cscript)) return '';
@@ -413,30 +644,105 @@
                 $cscript
             );
             
-            return "<script>\n" . $cscript . "\n</script>";
+            $isModule = preg_match('/^\s*(import|export)\s+/m', $cscript);
+            
+            if ($isModule) {
+                return "<script type=\"module\">\n" . $cscript . "\n</script>";
+            } else {
+                return "<script>\n" . $cscript . "\n</script>";
+            }
         }
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
-            
-            if ($bRoot && !str_contains($script, 'session_start()')) {
-                $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
-                $output .= "    @session_start();\n";
-                $output .= "}\n";
-            }
+                
+            if ($bRoot) {
+                if (!str_contains($script, 'session_start()')) {
+                    $output .= "// Auto session management\n";
+                    $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
+                    $output .= "    @session_start();\n";
+                    $output .= "}\n";
+                }
 
+                $output .= "// Load AJAX handlers\n";
+                $output .= "\$ajaxFiles = glob('dist/ajax/ajax-*.php');\n";
+                $output .= "if (!empty(\$ajaxFiles)) {\n";
+                $output .= "    // Production mode: Load from pre-compiled files\n";
+                $output .= "    foreach (\$ajaxFiles as \$ajaxFile) {\n";
+                $output .= "        require_once \$ajaxFile;\n";
+                $output .= "    }\n";
+                
+                if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {
+                    $output .= "}\n";
+                } else {
+                    $output .= "} else {\n";
+                    $output .= "    // Development mode: Load AJAX functions directly\n";
+                    
+                    foreach ($this->ajaxFunctions as $pageName => $functions) {
+                        foreach ($functions as $functionName => $functionData) {
+                            $output .= "    " . str_replace("\n", "\n    ", $functionData['code']) . "\n\n";
+                        }
+                    }
+                    $output .= "}\n";
+                }
+
+                $output .= "\n";
+                
+                $output .= "// Handle AJAX requests (must be before routing)\n";
+                $output .= "if (\$_SERVER['REQUEST_METHOD'] === 'POST' || \$_SERVER['REQUEST_METHOD'] === 'GET') {\n";
+                $output .= "    \$input = [];\n";
+                $output .= "    if (\$_SERVER['REQUEST_METHOD'] === 'POST') {\n";
+                $output .= "        \$input = json_decode(file_get_contents('php://input'), true) ?? [];\n";
+                $output .= "    } else {\n";
+                $output .= "        // GET requests - use query parameters\n";
+                $output .= "        \$input = \$_GET;\n";
+                $output .= "    }\n";
+                $output .= "    \n";
+                $output .= "    if (isset(\$input['action'])) {\n";
+                $output .= "        \$action = \$input['action'];\n";
+                $output .= "        if (function_exists(\$action)) {\n";
+                $output .= "            \$reflection = new ReflectionFunction(\$action);\n";
+                $output .= "            \$paramCount = \$reflection->getNumberOfParameters();\n";
+                $output .= "            \n";
+                $output .= "            if (\$paramCount > 0) {\n";
+                $output .= "                \$action(\$input);\n";
+                $output .= "            } else {\n";
+                $output .= "                \$action();\n";
+                $output .= "            }\n";
+                $output .= "            exit;\n";
+                $output .= "        }\n";
+                $output .= "    }\n";
+                $output .= "}\n\n";
+
+                $output .= $script . "\n";
+            }
+                                            
             if (!empty($header)) {
                 $output .= "\$phpue_header = <<<HTML\n{$header}\nHTML;\n";
             }
             
             $output .= $script . "\n";
             $output .= "?>\n";
-            
+
             if ($bRoot) {
                 $output .= "<!DOCTYPE html>\n";
                 $output .= "<html>\n";
                 $output .= "<head>\n";
-                $output .= "    <?= \$current_header ?? '' ?>\n";
+                
+                $output .= "<?php\n";
+                $output .= "echo \$phpue_header ?? '';\n";
+                $output .= "\n";
+                $output .= "\$routing = get_phpue_routing();\n";
+                $output .= "\$current_route = \$_GET['page'] ?? 'index';\n";
+                $output .= "\$route_meta = \$routing->getRouteMeta(\$current_route);\n";
+                $output .= "if (!empty(\$route_meta)) {\n";
+                $output .= "    \$view_header = \$routing->buildHeaderFromMeta(\$route_meta);\n";
+                $output .= "    if (!empty(\$view_header)) {\n";
+                $output .= "        echo \"\\n\" . \$view_header;\n";
+                $output .= "    }\n";
+                $output .= "}\n";
+                $output .= "?>\n";
+                
                 $output .= "</head>\n";
                 $output .= "<body>\n";
                 $output .= $template . "\n";
@@ -452,15 +758,23 @@
         }
     }
 
+    function get_phpue_converter() {
+        static $converter = null;
+        if ($converter === null) {
+            $converter = new PHPueConverter();
+        }
+        return $converter;
+    }
+
     function convert_pvue_file($pvueFilePath, $bRoot = false) {
-        $converter = new PHPueConverter();
+        $converter = get_phpue_converter();
         
         if (!file_exists($pvueFilePath)) {
             throw new Exception("PVue file not found: $pvueFilePath");
         }
         
         $content = file_get_contents($pvueFilePath);
-        return $converter->convertPVueToPHP($content, $bRoot);
+        return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath);
     }
 
     function get_phpue_routing() {
@@ -475,6 +789,10 @@
                     $routing->addView($view);
                 }
             }
+            
+            $currentRoute = $_GET['page'] ?? 'index';
+            $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+            $routing->preProcessCurrentPage($sourceFile);
         }
         return $converter->getRouting();
     }

@@ -1,0 +1,23 @@
+{
+  "injectTo": ["text.html.basic"],
+  "patterns": [
+    {
+      "begin": "<script>",
+      "end": "</script>",
+      "name": "meta.embedded.block.php",
+      "contentName": "source.php"
+    },
+    {
+      "begin": "<cscript>",
+      "end": "</cscript>",
+      "name": "meta.embedded.block.js", 
+      "contentName": "source.js"
+    },
+    {
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "name": "meta.embedded.block.php",
+      "contentName": "source.php"
+    }
+  ]
+}

@@ -1,9 +1,60 @@
-<script>
-    $age = 40;
-
-    $fruit = ["Banana", "Apple", "Cherry"];
-
+<!-- Author: Edward Patch -->
+<script>   
+    $age = 2025 - 1999;
+    $fruits = ["Banana", "Apple", "Cherry"];
+    $btnCount = $_SESSION['btnCount'] ?? 0;
     $counter = 20;
+
+    $bShowUserDetails = $_SESSION['bShowUserDetails'] ?? false;
+    $bFillFormBtnHidden = $_SESSION['bFillFormBtnHidden'] ?? false;
+
+    @AJAX('POST')
+    function ajaxFormSubmit($input) {
+        $formData = $input['formData'] ?? [];
+
+        $name = $formData['name'] ?? '';
+        $email = $formData['email'] ?? '';
+        $message = $formData['message'] ?? '';
+        $favFruit = $formData['favourite_fruit'] ?? '';
+        $newsletter = $formData['newsletter'] ?? false;
+        
+        $_SESSION['subForm_name'] = $name;
+        $_SESSION['subForm_email'] = $email;
+        $_SESSION['subForm_message'] = $message;
+        $_SESSION['subForm_favFruit'] = $favFruit;
+
+        $_SESSION['bShowUserDetails'] = true;
+    }
+
+    @AJAX('POST')
+    function toggleForm() {
+        if(!isset($_SESSION['bFillFormBtnHidden']) || $_SESSION['bFillFormBtnHidden'] === false)
+            $_SESSION['bShowUserDetails'] = false;
+
+        $_SESSION['bFillFormBtnHidden'] = !$_SESSION['bFillFormBtnHidden'];
+         file_put_contents('debug.txt', "🟢 toggleForm() called\n", FILE_APPEND);
+        file_put_contents('debug.txt', $_SESSION['bFillFormBtnHidden'] . "\n", FILE_APPEND);
+    }
+    
+    @AJAX('POST')
+    function saveBtnCounter()
+    { 
+        file_put_contents('debug.txt', "🟢 saveBtnCounter() called\n", FILE_APPEND);
+        file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
+
+        $_SESSION['btnCount'] += 1; 
+
+        file_put_contents('debug.txt', "🟢 BTNCount: " . $_SESSION['btnCount'] . "\n", FILE_APPEND);
+    }
+
+    @AJAX('POST')
+    function resetCounter()
+    { 
+        file_put_contents('debug.txt', "🟢 resetCounter() called\n", FILE_APPEND);
+        file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
+        $_SESSION['btnCount'] = 1; 
+        unset($_SESSION['btnCount']); 
+    }
 </script>
 
 <header>
@@ -14,38 +65,230 @@
 </header>
 
 <template>
-    <h1>Home Page</h1>
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+        <div class="max-w-4xl mx-auto px-8 sm:px-12 md:px-16 lg:px-24">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">🚀 PHPue - THE PHP RENAISSANCE IS HERE!</h1>
+                <p class="text-lg text-gray-600">PHPue Demo - Server-side rendering with Vue-like syntax</p>
+            </div>
 
-    <div id="js">
-        <p>JS Age: <span id="age"></span></p>
-    </div>
+             <!-- Fill Out a Form Button -->
+            <div p-if="!$bFillFormBtnHidden"  class="text-center mb-12">
+                <div onclick="showForm('toggleForm')" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-phpue-blue to-blue-600 hover:from-blue-600 hover:to-phpue-blue text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Fill out a Form
+                </div>
+            </div>
+            
+            <?php if($_SESSION['bShowUserDetails']): ?>
+            <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl shadow-lg p-8 mb-8 border border-emerald-200">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-emerald-500 rounded-full mr-3"></div>
+                        <h3 class="text-xl font-bold text-gray-800">📋 Submitted User Details</h3>
+                    </div>
+                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Personal Info Column -->
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                            <div class="flex items-center mb-3">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Personal Information</h4>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600 font-medium">Full Name</span>
+                                    <span class="text-gray-800 font-semibold">{{ $_SESSION['subForm_name'] ?? 'Not provided' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600 font-medium">Email Address</span>
+                                    <span class="text-blue-600 font-semibold">{{ $_SESSION['subForm_email'] ?? 'Not provided' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                            <div class="flex items-center mb-3">
+                                <div class="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Preferences</h4>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600 font-medium">Favorite Fruit</span>
+                                    <span class="text-purple-600 font-semibold">{{ $_SESSION['subForm_favFruit'] ?? 'Not selected' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Message Column -->
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-3">
+                            <div class="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Message</h4>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                            <p class="text-gray-700 leading-relaxed">
+                                {{ $_SESSION['subForm_message'] ?: 'No message provided' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        
 
-    <div id="php">
-        <p>PHP Age: <span>{{$age}}</span></p>
-    </div>
+            <div p-if="$bFillFormBtnHidden" class="text-center mb-12">
+                <button onclick="showForm('toggleForm')" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors mb-8">
+                    Hide Form
+                </button>
 
-    <div id="jsFruit">
-        <p>PHP Injected into JS Fruit Array: <span id="fruit"></span></p>
-    </div>
+                <!-- Beautiful Tailwind Form -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto border border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">📝 User Information Form</h2>
+                    
+                    <form class="space-y-6" onsubmit="submitForm(event, 'ajaxFormSubmit')">
+                        <!-- Name Field -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                            <input type="text" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" placeholder="Enter your full name">
+                        </div>
 
-    <div>
-        <ul>
-            <li p-for="$fru in $fruit">{{ $fru }}</li>
-        </ul>
-    </div>
+                        <!-- Email Field -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" name="email" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                placeholder="your.email@example.com">
+                        </div>
 
-    <div>
-        <p id="counter"></p>
+                        <!-- Fruit Preference -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Favorite Fruit</label>
+                            <select name="favorite_fruit" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                                <option value="">Select a fruit</option>
+                                <option p-for="$fruit in $fruits" value="{{$fruit}}">{{$fruit}}</option>
+                            </select>
+                        </div>
+
+                        <!-- Message -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Message</label>
+                            <textarea name="message"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 h-32"
+                                placeholder="Tell us something..."></textarea>
+                        </div>
+
+                        <!-- Checkbox -->
+                        <div class="flex items-center space-x-3">
+                            <input name="newsletter"  type="checkbox" 
+                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label class="text-sm text-gray-700">Subscribe to newsletter</label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" 
+                            class="w-full bg-gradient-to-r from-phpue-blue to-blue-600 hover:from-blue-600 hover:to-phpue-blue text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+                            Submit Form
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PHP Server Side and JS Client Side Counter Button -->
+            <div class="flex gap-4 p-6">
+               <button onclick="incrementCounter('saveBtnCounter')" class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-colors">
+                Count: <span id="btnCounter"></span>
+                </button>
+                
+                <button onclick="resetCounter('resetCounter')" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors">
+                Reset Counter
+                </button>
+            </div>
+
+            <!-- Data Cards Grid -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- JavaScript Age Card -->
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-3 h-3 bg-pink-500 rounded-full mr-3"></div>
+                        <h3 class="text-lg font-semibold text-gray-800">Client-Side JavaScript</h3>
+                    </div>
+                    <p class="text-pink-500 font-medium mb-2">JS Age:</p>
+                    <p class="text-3xl font-bold text-gray-700"><span id="age"></span></p>
+                </div>
+
+                <!-- PHP Age Card -->
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                        <h3 class="text-lg font-semibold text-gray-800">Server-Side PHP</h3>
+                    </div>
+                    <p class="text-blue-500 font-medium mb-2">PHP Age:</p>
+                    <p class="text-3xl font-bold text-gray-700">{{$age}}</p>
+                </div>
+            </div>
+
+            <!-- PHP to JS Data Bridge -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-green-500">
+                <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                    <h3 class="text-lg font-semibold text-gray-800">PHP → JavaScript Bridge</h3>
+                </div>
+                <p class="text-green-500 font-medium mb-2">PHP Array Injected into JavaScript:</p>
+                <div class="bg-gray-50 p-4 rounded-lg border">
+                    <p id="fruit" class="text-lg text-gray-700 font-mono"></p>
+                </div>
+            </div>
+
+            <!-- Dynamic Fruit List -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border-l-4 border-purple-500">
+                <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                    <h3 class="text-lg font-semibold text-gray-800">Dynamic List (p-for)</h3>
+                </div>
+                <p class="text-purple-500 font-medium mb-4">Fruits from PHP Array:</p>
+                <ul class="space-y-3">
+                    <li p-for="$fruit in $fruits" 
+                        class="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                        <span class="w-2 h-2 bg-emerald-400 rounded-full mr-3"></span>
+                        <span class="text-gray-700 font-medium">{{ $fruit }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Counter Display -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+                <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
+                    <h3 class="text-lg font-semibold text-gray-800">PHP Variable in JavaScript</h3>
+                </div>
+                <p id="counter" class="text-2xl font-bold text-orange-500"></p>
+            </div>
+        </div>
     </div>
 </template>
 
 <cscript>
-    let age = 27;
+    let btnCounter = {{$btnCount}};
+    let btnCounterContainer = document.getElementById("btnCounter");
+    btnCounterContainer.innerText = btnCounter;
+    
+    let age = 2025 - 1995;
     let ageContainer = document.getElementById("age");
     ageContainer.innerText = age;
 
-    let fruit = {{$fruit}};
-
+    let fruit = {{$fruits}};
     let fruitContainer = document.getElementById("fruit");
     fruitContainer.innerText = fruit;
 
@@ -53,5 +296,91 @@
     let counterContainer = document.getElementById("counter");
     counterContainer.innerText = "Counter: " + counter;
 
-</cscript>
+    async function submitForm(event, methodName) {
+        event.preventDefault();
 
+        const formData = new FormData(event.target);
+
+        try {
+            const response = await fetch('', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: methodName,
+                        formData: Object.fromEntries(formData)
+                    })
+                });
+
+            if (response.status === 200) {
+                await showForm('toggleForm');
+            }
+        } catch (error) {
+            console.log("❌ Form submission error:", error);
+        }
+    }
+
+    async function showForm(methodName) {
+        try {
+            const response = await fetch('', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: methodName})
+            });
+            
+            
+            if (response.status === 200)
+                window.location.reload();
+            
+        } catch (error) {
+            console.log("❌ AJAX Error:", error);
+        }
+    }
+
+    async function incrementCounter(methodName)
+    {
+        btnCounter++;
+
+        try {
+            const response = await fetch('', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: methodName})
+            });
+            
+            console.log("🟢 AJAX Response Status:", response.status);
+
+            if(response.status === 200) {
+                 let btnCounterContainer = document.getElementById("btnCounter");
+                 btnCounterContainer.innerText = btnCounter;
+                 console.log("Here");
+            }
+            
+        } catch (error) {
+            console.log("❌ AJAX Error:", error);
+        }
+    }
+
+    async function resetCounter(methodName)
+    {
+        btnCounter = 0;
+
+        try {
+            const response = await fetch('', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: methodName})
+            });
+
+            console.log("🟢 AJAX Response Status:", response.status);
+
+            if(response.status === 200) {
+                let btnCounterContainer = document.getElementById("btnCounter");
+                btnCounterContainer.innerText = btnCounter;
+                console.log("Here");
+            }
+            
+        } catch (error) {
+            console.log("❌ AJAX Error:", error);
+        }
+    }
+</cscript>

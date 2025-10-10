@@ -1,11 +1,6 @@
-<!-- Author: Edward Patch -->
 <header>
-    <title>About Us</title>
+    <title>Documentation</title>
     <meta name="description" content="PHPue leverages PHP server-side rendering, and can create affordable web applications">
     <meta name="keywords" content="PHP, VUE, PHPue">
     <meta name="author" content="Edward Patch">
 </header>
-
-<template>
-    <h1>About Page</h1>
-</template>
