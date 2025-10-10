@@ -1,3 +1,8 @@
+<script>
+    $routes = phpue_navigation();
+    $routes = array_reverse($routes, true);
+</script>
+
 <template>
     <!-- Mint Theme Navigation -->
     <nav class="bg-emerald-500 shadow-lg border-b border-emerald-600">
@@ -11,11 +16,7 @@
                 <!-- Desktop Menu -->
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="/" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Home</a>
-                        <a href="/about" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">About</a>
-                        <a href="#" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Features</a>
-                        <a href="#" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Docs</a>
-                        <a href="#" class="bg-white text-emerald-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-50 transition-colors duration-200 shadow-sm">Get Started</a>
+                        <a p-for="$route in $routes" href="{{ $route['url'] }}" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">{{ $route['title'] }}</a>
                     </div>
                 </div>
 
