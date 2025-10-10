@@ -701,7 +701,17 @@
                 $output .= "    if (isset(\$input['action'])) {\n";
                 $output .= "        \$action = \$input['action'];\n";
                 $output .= "        if (function_exists(\$action)) {\n";
-                $output .= "            \$action();\n";
+                $output .= "            // Use reflection to detect if function expects parameters\n";
+                $output .= "            \$reflection = new ReflectionFunction(\$action);\n";
+                $output .= "            \$paramCount = \$reflection->getNumberOfParameters();\n";
+                $output .= "            \n";
+                $output .= "            if (\$paramCount > 0) {\n";
+                $output .= "                // Function expects parameters - pass the input data\n";
+                $output .= "                \$action(\$input);\n";
+                $output .= "            } else {\n";
+                $output .= "                // Function expects no parameters\n";
+                $output .= "                \$action();\n";
+                $output .= "            }\n";
                 $output .= "            exit; // Exit immediately after AJAX call\n";
                 $output .= "        }\n";
                 $output .= "    }\n";
