@@ -11,14 +11,17 @@ A powerful PHP framework that brings Vue-inspired syntax to server-side renderin
 *It’s like Node, but without the ```node_modules```!*
 
 **Getting started is easy:**
+
 Just clone the repo and grab two files — ```conversion.php``` and ```index.php```. That’s it. You’re ready to build.
 
 Use it with XAMPP, PHP CLI, Docker Compose, or even upload directly via FTP. Watch your web application come to life with minimal setup and maximum flexibility.
 
 **🌟 What is PHPue?**
+
 PHPue combines the simplicity of PHP with Vue-like templating syntax to create fast, scalable web applications with server-side rendering. It offers the developer experience of modern frameworks with the performance and simplicity of traditional PHP.
 
 **🎯 Features**
+
 🏗️ Component System
 ```html
 <!-- components/Navbar.pvue -->
@@ -41,6 +44,7 @@ PHPue combines the simplicity of PHP with Vue-like templating syntax to create f
 ```
 
 **Vue's Style Setup Tag**
+
 - Set up calls and ensures PHP session is started.
 - Only needs to be called in App.vue, unless you need to ensure the session is started.
 - setup tag is not required in views or components.
