@@ -26,11 +26,11 @@
         public function build() {
             $this->ensureDistDirectory();
             $this->compileAllFiles();
-            echo "✅ Build complete! All .pvue files compiled to dist/ directory\n";
+            echo "✅ Build complete! All .pvue files compiled to .dist/ directory\n";
         }
 
         private function ensureDistDirectory() {
-            $distDir = 'dist';
+            $distDir = '.dist';
             if (!is_dir($distDir)) {
                 mkdir($distDir, 0755, true);
             }
@@ -141,7 +141,7 @@
             $this->ensureDistDirectory();
             
             $appPVue = 'App.pvue';
-            $appPHP = 'dist/App.php';
+            $appPHP = '.dist/App.php';
             if(file_exists($appPVue)) {
                 $this->preProcessAllViewsForAjax();
                 $phpCode = convert_pvue_file($appPVue, true, $appPVue);
@@ -149,17 +149,30 @@
                 echo "✅ Compiled: $appPVue -> $appPHP\n";
             }
 
-            $files = glob('components/*.pvue');
-            foreach ($files as $pvueFile) {
-                $phpFile = 'dist/components/' . basename($pvueFile, '.pvue') . '.php';
-                $phpCode = convert_pvue_file($pvueFile, false, $pvueFile);
-                file_put_contents($phpFile, $phpCode);
-                echo "✅ Compiled: $pvueFile -> $phpFile\n";
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator('components', RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+
+            foreach ($iterator as $pvueFile) {
+                if (pathinfo($pvueFile, PATHINFO_EXTENSION) === 'pvue') {
+                    $relativePath = str_replace('\\', '/', substr($pvueFile, strlen('components/'))); // Normalize slashes
+                    $phpTargetPath = '.dist/components/' . substr($relativePath, 0, -5) . '.php'; // Replace .pvue with .php
+
+                    $phpTargetDir = dirname($phpTargetPath);
+                    if (!is_dir($phpTargetDir)) {
+                        mkdir($phpTargetDir, 0755, true);
+                    }
+
+                    $phpCode = convert_pvue_file($pvueFile, false, $pvueFile);
+                    file_put_contents($phpTargetPath, $phpCode);
+
+                    echo "✅ Compiled: $pvueFile -> $phpTargetPath\n";
+                }
             }
 
             $files = glob('views/*.pvue');
             foreach ($files as $pvueFile) {
-                $phpFile = 'dist/pages/' . basename($pvueFile, '.pvue') . '.php';
+                $phpFile = '.dist/pages/' . basename($pvueFile, '.pvue') . '.php';
                 $phpCode = convert_pvue_file($pvueFile, false, $pvueFile);
                 file_put_contents($phpFile, $phpCode);
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
@@ -174,7 +187,7 @@
 
         private function copyAssetsToDist() {
             $assetsDir = 'assets';
-            $distAssetsDir = 'dist/assets';
+            $distAssetsDir = '.dist/assets';
             
             if (!is_dir($distAssetsDir)) {
                 mkdir($distAssetsDir, 0755, true);
@@ -182,7 +195,7 @@
             
             if (is_dir($assetsDir)) {
                 $this->copyDirectory($assetsDir, $distAssetsDir);
-                echo "✅ Copied assets to dist/assets/\n";
+                echo "✅ Copied assets to .dist/assets/\n";
             } else {
                 echo "ℹ️ No assets directory found\n";
             }

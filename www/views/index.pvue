@@ -1,6 +1,12 @@
 <!-- Author: Edward Patch -->
-<script>   
-    $age = 2025 - 1999;
+<script>
+    @require UserDetailsDashboard 'components/dashboards/indexUserDetails.pvue';
+    @require Form 'components/forms/indexForm.pvue';
+    // yes, PHP is age 1995, but also JS is...
+    // I wanted to have 2 different numbers, so
+    // you can see what the difference is on Tech Demo.
+    // xD
+    $age = 2025 - 1999; 
     $fruits = ["Banana", "Apple", "Cherry"];
     $btnCount = $_SESSION['btnCount'] ?? 0;
     $counter = 20;
@@ -65,6 +71,7 @@
 </header>
 
 <template>
+    <p>{{$childMessage}}</p>
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
         <div class="max-w-4xl mx-auto px-8 sm:px-12 md:px-16 lg:px-24">
             <!-- Header -->
@@ -82,128 +89,9 @@
                     Fill out a Form
                 </div>
             </div>
-            
-            <?php if($_SESSION['bShowUserDetails']): ?>
-            <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl shadow-lg p-8 mb-8 border border-emerald-200">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-emerald-500 rounded-full mr-3"></div>
-                        <h3 class="text-xl font-bold text-gray-800">📋 Submitted User Details</h3>
-                    </div>
-                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    </div>
-                </div>
-                
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Personal Info Column -->
-                    <div class="space-y-4">
-                        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                            <div class="flex items-center mb-3">
-                                <div class="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Personal Information</h4>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                    <span class="text-gray-600 font-medium">Full Name</span>
-                                    <span class="text-gray-800 font-semibold">{{ $_SESSION['subForm_name'] ?? 'Not provided' }}</span>
-                                </div>
-                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                    <span class="text-gray-600 font-medium">Email Address</span>
-                                    <span class="text-blue-600 font-semibold">{{ $_SESSION['subForm_email'] ?? 'Not provided' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                            <div class="flex items-center mb-3">
-                                <div class="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-                                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Preferences</h4>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center py-2">
-                                    <span class="text-gray-600 font-medium">Favorite Fruit</span>
-                                    <span class="text-purple-600 font-semibold">{{ $_SESSION['subForm_favFruit'] ?? 'Not selected' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Message Column -->
-                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <div class="flex items-center mb-3">
-                            <div class="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-                            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Message</h4>
-                        </div>
-                        <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                            <p class="text-gray-700 leading-relaxed">
-                                {{ $_SESSION['subForm_message'] ?: 'No message provided' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-        
 
-            <div p-if="$bFillFormBtnHidden" class="text-center mb-12">
-                <button onclick="showForm('toggleForm')" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors mb-8">
-                    Hide Form
-                </button>
-
-                <!-- Beautiful Tailwind Form -->
-                <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto border border-gray-100">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">📝 User Information Form</h2>
-                    
-                    <form class="space-y-6" onsubmit="submitForm(event, 'ajaxFormSubmit')">
-                        <!-- Name Field -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">Full Name</label>
-                            <input type="text" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" placeholder="Enter your full name">
-                        </div>
-
-                        <!-- Email Field -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">Email Address</label>
-                            <input type="email" name="email" 
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
-                                placeholder="your.email@example.com">
-                        </div>
-
-                        <!-- Fruit Preference -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">Favorite Fruit</label>
-                            <select name="favorite_fruit" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
-                                <option value="">Select a fruit</option>
-                                <option p-for="$fruit in $fruits" value="{{$fruit}}">{{$fruit}}</option>
-                            </select>
-                        </div>
-
-                        <!-- Message -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">Message</label>
-                            <textarea name="message"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 h-32"
-                                placeholder="Tell us something..."></textarea>
-                        </div>
-
-                        <!-- Checkbox -->
-                        <div class="flex items-center space-x-3">
-                            <input name="newsletter"  type="checkbox" 
-                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label class="text-sm text-gray-700">Subscribe to newsletter</label>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <button type="submit" 
-                            class="w-full bg-gradient-to-r from-phpue-blue to-blue-600 hover:from-blue-600 hover:to-phpue-blue text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
-                            Submit Form
-                        </button>
-                    </form>
-                </div>
-            </div>
+            <UserDetailsDashboard></UserDetailsDashboard>
+            <Form></Form>
 
             <!-- PHP Server Side and JS Client Side Counter Button -->
             <div class="flex gap-4 p-6">
@@ -295,29 +183,6 @@
     let counter = {{$counter}};
     let counterContainer = document.getElementById("counter");
     counterContainer.innerText = "Counter: " + counter;
-
-    async function submitForm(event, methodName) {
-        event.preventDefault();
-
-        const formData = new FormData(event.target);
-
-        try {
-            const response = await fetch('', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        action: methodName,
-                        formData: Object.fromEntries(formData)
-                    })
-                });
-
-            if (response.status === 200) {
-                await showForm('toggleForm');
-            }
-        } catch (error) {
-            console.log("❌ Form submission error:", error);
-        }
-    }
 
     async function showForm(methodName) {
         try {

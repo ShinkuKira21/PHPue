@@ -8,7 +8,7 @@
             
             $this->routes[$viewName] = [
                 'file' => $viewPath,
-                'compiled' => 'dist/pages/' . $viewName . '.php',
+                'compiled' => '.dist/pages/' . $viewName . '.php',
                 'route' => $viewName === 'index' ? '/' : "/$viewName",
                 'header' => $this->extractMetaData($headerContent)
             ];
@@ -174,12 +174,13 @@
             $componentMap = [];
             $requiredComponents = [];
             
+            // ✅ FIX: Pass the $bRoot flag to handleRequires
+            $requireResult = $this->handleRequires($script, $bRoot);
+            $script = $requireResult['script'];
+            $componentMap = $requireResult['components'];
+            $requiredComponents = $requireResult['required'];
+            
             if ($bRoot) {
-                $requireResult = $this->handleRequires($script);
-                $script = $requireResult['script'];
-                $componentMap = $requireResult['components'];
-                $requiredComponents = $requireResult['required'];
-                
                 $script = $this->injectDynamicHeaderLogic($script);
                 $script = $this->injectRoutingLogic($script);
             }
@@ -194,6 +195,7 @@
                 $script = $warning . "\n" . $script;
             }
             
+            // ✅ FIX: Always inject components, not just in root
             $convertedTemplate = $this->injectComponents($convertedTemplate, $componentMap);
             
             if ($bRoot) {
@@ -354,7 +356,7 @@
         }
 
         public function generateAjaxFiles() {
-            $ajaxDir = 'dist/ajax';
+            $ajaxDir = '.dist/ajax';
             if (!is_dir($ajaxDir)) {
                 mkdir($ajaxDir, 0755, true);
             }
@@ -487,7 +489,7 @@
             return $matches[1] ?? '';
         }
         
-        public function handleRequires($scriptContent) {
+        private function handleRequires($scriptContent, $isRoot = true) {
             preg_match_all('/@require\s+(\w+)\s+\'([^\']+)\'\s*;?/', $scriptContent, $componentRequires, PREG_SET_ORDER);
             
             $componentMap = [];
@@ -500,23 +502,25 @@
                 
                 if (file_exists($componentPath)) {
                     $componentContent = file_get_contents($componentPath);
-                    $compiledComponent = $this->convertPVueToPHP($componentContent, false);
+                    
+                    // ✅ CRITICAL FIX: Always compile components, regardless of root status
+                    $compiledComponent = $this->convertPVueToPHP($componentContent, false, $componentPath);
                     
                     $componentMap[$componentName] = $compiledComponent;
+                    
+                    // ✅ Remove the @require line completely - we've processed it
+                    $scriptContent = str_replace($match[0], "// Component '$componentName' loaded from '$componentPath'", $scriptContent);
                 } else {
-                    $scriptContent .= "\n// ERROR: Component file not found: $componentPath\n";
+                    $scriptContent = str_replace($match[0], "// ERROR: Component file not found: $componentPath", $scriptContent);
                 }
             }
 
+            // ✅ Remove the view routing logic from this method - it's confusing the issue
             $lines = explode("\n", $scriptContent);
             $cleanScriptContent = [];
 
             foreach ($lines as $line) {
-                if (preg_match('/^\s*@require\s+\w+\s+\'[^\']+\'\s*;?\s*$/', $line)) {
-                    $cleanScriptContent[] = "// @require processed and removed";
-                    continue;
-                }
-                
+                // View routing is separate from component requires
                 if (preg_match('/^\s*#require\s+[\'"]([^\'"]+\.pvue)[\'"]\s*;?\s*$/', $line, $matches)) {
                     $viewPath = $matches[1];
 
@@ -665,7 +669,7 @@
                 }
 
                 $output .= "// Load AJAX handlers\n";
-                $output .= "\$ajaxFiles = glob('dist/ajax/ajax-*.php');\n";
+                $output .= "\$ajaxFiles = glob('.dist/ajax/ajax-*.php');\n";
                 $output .= "if (!empty(\$ajaxFiles)) {\n";
                 $output .= "    // Production mode: Load from pre-compiled files\n";
                 $output .= "    foreach (\$ajaxFiles as \$ajaxFile) {\n";
