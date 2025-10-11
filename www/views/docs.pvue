@@ -1,6 +1,330 @@
+<script>
+    @require Sidebar 'components/navigation/documentationSidebar.pvue';
+
+    // Code Blocks
+    @require GetStartedCB 'components/codeBlocks/GetStarted.pvue';
+    @require RequireCB 'components/codeBlocks/Require.pvue';
+    @require TemplateBlocksCB 'components/codeBlocks/TemplateBlocks.pvue';
+    @require PModelDirectiveCB 'components/codeBlocks/PModelDirective.pvue';
+    @require AJAXPostCB 'components/codeBlocks/AJAXPost.pvue';
+    @require AJAXGetCB 'components/codeBlocks/AJAXGet.pvue';
+</script>
+
 <header>
     <title>Documentation</title>
     <meta name="description" content="PHPue leverages PHP server-side rendering, and can create affordable web applications">
     <meta name="keywords" content="PHP, VUE, PHPue">
     <meta name="author" content="Edward Patch">
 </header>
+
+<template>
+    <div class="min-h-screen bg-gray-50">
+        <!-- Header -->
+        <div class="bg-white border-b border-gray-200">
+            <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <div class="text-2xl font-bold text-emerald-600">PHPue</div>
+                        <span class="ml-4 text-sm text-gray-500">Documentation</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <Sidebar></Sidebar>
+
+                <!-- Main Content -->
+                <div class="flex-1 min-w-0">
+                    <div class="prose prose-emerald max-w-none">
+                        
+                        <!-- Introduction -->
+                        <section id="introduction" class="scroll-mt-16">
+                            <h1 class="text-4xl font-bold text-gray-900 mb-6">Introduction</h1>
+                            <p class="text-xl text-gray-600 mb-8">
+                                PHPue is a PHP framework that brings the simplicity of Vue's component model to server-side rendering. 
+                                Build modern web applications without the complexity of build tools or client-side hydration.
+                            </p>
+                            
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mb-8">
+                                <h3 class="text-lg font-semibold text-emerald-900 mb-2">What is PHPue?</h3>
+                                <p class="text-emerald-800">
+                                    A PHP framework that uses Vue-like syntax for server-side rendering. Write components with familiar directives, 
+                                    but get pure HTML from the server. Zero JavaScript required for core functionality.
+                                </p>
+                            </div>
+                        </section>
+
+                        <!-- Get Started -->
+                        <section id="get-started" class="scroll-mt-16 mt-16">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">Get Started</h2>
+                            <p class="text-lg text-gray-600 mb-6">
+                                Start building with PHPue in minutes. No complex setup, no build process, just pure PHP power.
+                            </p>
+                            
+                            <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                                <div class="flex items-center text-sm text-gray-400 mb-4">
+                                    <span>Terminal</span>
+                                </div>
+                                
+                                <GetStartedCB></GetStartedCB>
+                                
+                            </div>
+                        </section>
+
+                        <!-- Installation -->
+                        <section id="installation" class="scroll-mt-16 mt-16">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">Installation</h2>
+                            <p class="text-lg text-gray-600 mb-6">
+                                PHPue requires PHP 8.0+ and works with any web server. No additional extensions needed.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                    <h4 class="font-semibold text-lg mb-3">Manual Installation</h4>
+   
+                                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                                        <li><a href="https://github.com/ShinkuKira21/PHPue" target="_blank" class="text-emerald-600 hover:text-emerald-700">Download PHPue core files | PHPue - GitHub</a></li>
+                                        <li>Include in your project.</li>
+                                        <li>Start building views and components.</li>
+                                        <li><a href="https://github.com/ShinkuKira21/PHPue-SyntaxHighlighter" target="_blank" class="text-emerald-600 hover:text-emerald-700">Syntax Highlighting: Download PHPue Syntax Highlighter |<br> VSCode Extension - GitHub</a></li>
+                                    </ol>
+                                </div>
+                                <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                    <h4 class="font-semibold text-lg mb-3">(To Be Added) Composer</h4>
+                                    <div class="bg-gray-900 rounded-lg p-4">
+                                        <code class="text-green-400 text-sm">composer require phpue/framework</code>
+                                    </div>
+                                    <h4 class="font-semibold text-lg mt-2 mb-3">(To Be Added) NPM</h4>
+                                    <div class="bg-gray-900 rounded-lg p-4">
+                                        <code class="text-green-400 text-sm">npm install phpue@latest</code>
+                                    </div>
+                                     <h4 class="font-semibold text-lg mt-2 mb-3">(To Be Added) YARN</h4>
+                                    <div class="bg-gray-900 rounded-lg p-4">
+                                        <code class="text-green-400 text-sm">yarn install phpue@latest</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- File Structure -->
+                        <section id="file-structure" class="scroll-mt-16 mt-16">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">File Structure</h2>
+                            <p class="text-lg text-gray-600 mb-6">
+                                PHPue follows a convention-based structure that makes organizing your application intuitive and scalable.
+                            </p>
+                            
+                            <div class="space-y-6">
+                                <!-- Project Structure -->
+                                <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                    <h4 class="font-semibold text-lg mb-4">Project Structure</h4>
+                                    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400">
+                                        <div class="text-gray-400"># Root Directory</div>
+                                        <div>www/</div>
+                                        <div class="ml-4 text-amber-300">App.pvue</div>
+                                        <div class="ml-4 text-amber-300">index.php</div>
+                                        <div class="ml-4 text-amber-300">conversion.php</div>
+                                        <div class="ml-4 text-amber-300">tailwind.config.js</div>
+                                        <div class="ml-4 text-amber-300">pvue-injections.json</div>
+                                        <div class="ml-4 text-blue-300">assets/</div>
+                                        <div class="ml-8 text-cyan-300">css/</div>
+                                        <div class="ml-8 text-cyan-300">js/</div>
+                                        <div class="ml-4 text-blue-300">components/</div>
+                                        <div class="ml-8 text-cyan-300">dashboards/</div>
+                                        <div class="ml-8 text-cyan-300">forms/</div>
+                                        <div class="ml-8 text-amber-300">Navbar.pvue</div>
+                                        <div class="ml-4 text-blue-300">views/</div>
+                                        <div class="ml-8 text-amber-300">index.pvue</div>
+                                        <div class="ml-8 text-amber-300">about.pvue</div>
+                                        <div class="ml-8 text-amber-300">docs.pvue</div>
+                                        <div class="ml-8 text-amber-300">features.pvue</div>
+                                        <div class="ml-4 text-purple-300">.dist/</div>
+                                        <div class="ml-8 text-gray-400"># Auto-generated files</div>
+                                        <div class="ml-8 text-cyan-300">pages/</div>
+                                        <div class="ml-8 text-cyan-300">ajax/</div><br>
+                                        <div class="ml-8 text-gray-400"># Core files</div>
+                                        <div class="ml-8 text-amber-300">App.pvue</div>
+                                        <div class="ml-8 text-cyan-300">assets/</div>
+                                        <div class="ml-8 text-cyan-300">components/</div>
+                                    </div>
+                                </div>
+
+                                <!-- Directory Explanations -->
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                        <h4 class="font-semibold text-lg mb-3 text-emerald-600">Core Files</h4>
+                                        <ul class="space-y-2 text-gray-700">
+                                            <li><strong class="text-gray-900">App.pvue</strong> - Main application layout and routing</li>
+                                            <li><strong class="text-gray-900">index.php</strong> - Application server / builder</li>
+                                            <li><strong class="text-gray-900">conversion.php</strong> - Build engine for PVue files</li>
+                                            <li><strong class="text-gray-900">pvue-injections.json</strong> - Auto-injection configuration for syntax highlighting</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                        <h4 class="font-semibold text-lg mb-3 text-emerald-600">Directories</h4>
+                                        <ul class="space-y-2 text-gray-700">
+                                            <li><strong class="text-gray-900">views/</strong> - Page components with routing</li>
+                                            <li><strong class="text-gray-900">components/</strong> - Reusable UI components</li>
+                                            <li><strong class="text-gray-900">assets/</strong> - Static files (CSS, JS, images)</li>
+                                            <li><strong class="text-gray-900">.dist/</strong> - Compiled PHP files (auto-generated)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Naming Convention -->
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
+                                    <h4 class="font-semibold text-lg mb-3 text-emerald-900">Naming Conventions</h4>
+                                    <div class="space-y-3 text-emerald-800">
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
+                                            <span><strong>Views:</strong> Use descriptive names (<code class="bg-emerald-100 px-1 rounded">about.pvue</code>, <code class="bg-emerald-100 px-1 rounded">docs.pvue</code>)</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
+                                            <span><strong>Components:</strong> Use PascalCase (<code class="bg-emerald-100 px-1 rounded">Navbar.pvue</code>, <code class="bg-emerald-100 px-1 rounded">Sidebar.pvue</code>)</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
+                                            <span><strong>Ordered Views:</strong> Prefix with letters for sorting (<code class="bg-emerald-100 px-1 rounded">a-get-started.pvue</code>, <code class="bg-emerald-100 px-1 rounded">b-sponser.pvue</code>)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Example Terminal Output -->
+                                <div class="bg-gray-900 rounded-xl p-6">
+                                    <div class="flex items-center text-sm text-gray-400 mb-4">
+                                        <span>Terminal</span>
+                                    </div>
+                                    <div class="font-mono text-sm text-green-400 space-y-1">
+                                        <div><span class="text-blue-400">[skira24@SK14 PHPue]$</span> cd www</div>
+                                        <div><span class="text-blue-400">[skira24@SK14 www]$</span> ls</div>
+                                        <div>App.pvue  components      pvue-injections.json  views</div>
+                                        <div>assets    conversion.php  index.php  tailwind.config.js</div>
+                                        <div><span class="text-blue-400">[skira24@SK14 www]$</span> cd assets</div>
+                                        <div><span class="text-blue-400">[skira24@SK14 assets]$</span> ls</div>
+                                        <div>css  js</div>
+                                        <div><span class="text-blue-400">[skira24@SK14 assets]$</span> cd ../components/</div>
+                                        <div><span class="text-blue-400">[skira24@SK14 components]$</span> ls</div>
+                                        <div>codeBlocks  dashboards  forms  Navbar.pvue  navigation</div>
+                                        <div><span class="text-blue-400">[skira24@SK14 components]$</span> cd ../views/</div>
+                                        <div><span class="text-blue-400">[skira24@SK14 views]$</span> ls</div>
+                                        <div>about.pvue  a-get-started.pvue  b-sponser.pvue  docs.pvue  features.pvue  index.pvue</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Require -->
+                        <section id="require" class="scroll-mt-16 mt-16">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">@require & #require</h2>
+                            <p class="text-lg text-gray-600 mb-6">
+                                Import components and views using simple require statements.
+                            </p>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="font-semibold text-lg mb-3">Component Require</h4>
+                                    <div class="bg-gray-900 rounded-xl p-6 mb-4">
+                                        <pre class="text-green-400 text-sm"><code>@require ComponentName 'components/componentName.pvue';</code></pre>
+                                    </div>
+                                    <p class="text-gray-700">Import a component for use in your template.</p>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="font-semibold text-lg mb-3">View Require</h4>
+                                    <div class="bg-gray-900 rounded-xl p-6 mb-4">
+                                        <pre class="text-green-400 text-sm"><code>#require 'views/viewName.pvue';</code></pre>
+                                    </div>
+                                    <p class="text-gray-700">Include a view template with its own logic.</p>
+                                </div>
+
+                                <!-- App.pvue Example -->
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mt-6">
+                                    <h4 class="font-semibold text-lg mb-3 text-emerald-900">Example: App.pvue</h4>
+                                    <p class="text-emerald-800 mb-4">
+                                        Here's how you might structure your main application file:
+                                    </p>
+                                    <div class="bg-gray-900 rounded-xl p-6">
+                                        <RequireCB></RequireCB>
+                                    </div>
+                                    <div class="mt-4 text-sm text-emerald-700">
+                                        <p><strong>Key Points:</strong></p>
+                                        <ul class="list-disc list-inside space-y-1">
+                                            <li><strong>@require</strong> imports reusable components</li>
+                                            <li><strong>#require</strong> imports views for routing</li>
+                                            <li><strong>&lt;header&gt;</strong> block for global assets and meta tags</li>
+                                            <li><strong>&lt;View&gt;</strong> component automatically handles current page rendering</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Template Blocks -->
+                        <section id="blocks" class="scroll-mt-16 mt-16">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">Template Blocks</h2>
+                            <p class="text-lg text-gray-600 mb-6">
+                                PHPue components are structured using familiar blocks for different concerns.
+                            </p>
+                            
+                            <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                                <TemplateBlocksCB></TemplateBlocksCB>
+                            </div>
+                        </section>
+
+                        <!-- Directives -->
+                        <section id="directives" class="scroll-mt-16 mt-16">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">Directives</h2>
+                            <p class="text-lg text-gray-600 mb-6">
+                                Use Vue-like directives for common tasks. All processing happens on the server.
+                            </p>
+                            
+                            <div class="space-y-6">
+                                <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                    <h4 class="font-semibold text-lg mb-3">p-if</h4>
+                                    <div class="bg-gray-900 rounded-lg p-4 mb-3">
+                                        <code class="text-green-400 text-sm">&lt;div p-if="$user-&gt;isAdmin"&gt;Admin Content&lt;/div&gt;</code>
+                                    </div>
+                                    <p class="text-gray-700">Conditionally render elements based on PHP expressions.</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                    <h4 class="font-semibold text-lg mb-3">p-for</h4>
+                                    <div class="bg-gray-900 rounded-lg p-4 mb-3">
+                                        <code class="text-green-400 text-sm">&lt;li p-for="$item in $items"&gt;{{ $item->name }}&lt;/li&gt;</code>
+                                    </div>
+                                    <p class="text-gray-700">Loop through arrays and objects to render lists.</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-xl p-6">
+                                    <h4 class="font-semibold text-lg mb-3">p-model <span class="text-sm text-orange-600">(Coming Soon)</span></h4>
+                                    <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                                        <PModelDirectiveCB></PModelDirectiveCB>
+                                    </div>
+                                    <p class="text-gray-700">Two-way data binding for form inputs.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="ajax" class="scroll-mt-16 mt-16">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">AJAX Functions</h2>
+                            <p class="text-lg text-gray-600 mb-6">
+                                Create server-side AJAX handlers with simple annotations.
+                            </p>
+                            
+                            <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                                <AJAXPostCB></AJAXPostCB>
+                            </div>
+
+                            <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                                <AJAXGetCB></AJAXGetCB>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

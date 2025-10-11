@@ -71,7 +71,6 @@
 </header>
 
 <template>
-    <p>{{$childMessage}}</p>
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
         <div class="max-w-4xl mx-auto px-8 sm:px-12 md:px-16 lg:px-24">
             <!-- Header -->
