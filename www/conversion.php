@@ -173,8 +173,7 @@
             
             $componentMap = [];
             $requiredComponents = [];
-            
-            // ✅ FIX: Pass the $bRoot flag to handleRequires
+
             $requireResult = $this->handleRequires($script, $bRoot);
             $script = $requireResult['script'];
             $componentMap = $requireResult['components'];
@@ -195,7 +194,6 @@
                 $script = $warning . "\n" . $script;
             }
             
-            // ✅ FIX: Always inject components, not just in root
             $convertedTemplate = $this->injectComponents($convertedTemplate, $componentMap);
             
             if ($bRoot) {
@@ -503,24 +501,20 @@
                 if (file_exists($componentPath)) {
                     $componentContent = file_get_contents($componentPath);
                     
-                    // ✅ CRITICAL FIX: Always compile components, regardless of root status
                     $compiledComponent = $this->convertPVueToPHP($componentContent, false, $componentPath);
                     
                     $componentMap[$componentName] = $compiledComponent;
                     
-                    // ✅ Remove the @require line completely - we've processed it
                     $scriptContent = str_replace($match[0], "// Component '$componentName' loaded from '$componentPath'", $scriptContent);
                 } else {
                     $scriptContent = str_replace($match[0], "// ERROR: Component file not found: $componentPath", $scriptContent);
                 }
             }
 
-            // ✅ Remove the view routing logic from this method - it's confusing the issue
             $lines = explode("\n", $scriptContent);
             $cleanScriptContent = [];
 
             foreach ($lines as $line) {
-                // View routing is separate from component requires
                 if (preg_match('/^\s*#require\s+[\'"]([^\'"]+\.pvue)[\'"]\s*;?\s*$/', $line, $matches)) {
                     $viewPath = $matches[1];
 
