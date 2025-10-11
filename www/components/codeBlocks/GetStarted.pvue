@@ -1,9 +1,0 @@
-<template>
-<pre class="text-green-400 text-sm"><code># Clone the starter template
-git clone https://github.com/ShinkuKira21/PHPue my-app
-cd my-app/www
-
-# Start the development server
-php -S localhost:8000</code>
-</pre>
-</template>

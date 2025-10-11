@@ -1,7 +1,0 @@
-<template>
-<pre class="text-green-400 text-sm"><code>@AJAX('POST')
-function saveUser($input) {
-    // Handle form submission
-    return ['success' => true];
-}</code></pre>
-</template>

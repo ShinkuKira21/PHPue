@@ -2,7 +2,6 @@
 <script>
     @require Navbar 'components/Navbar.pvue';
     #require 'views/index.pvue';
-    #require 'views/about.pvue';
 </script>
 
 <header>
