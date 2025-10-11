@@ -1,0 +1,96 @@
+<template>
+    <div class="lg:w-64 flex-shrink-0">
+        <nav class="sticky top-8 space-y-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Getting Started</div>
+            <a href="#introduction" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">Introduction</a>
+            <a href="#get-started" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">Get Started</a>
+            <a href="#installation" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">Installation</a>
+
+            <a href="#file-structure" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">File Structure</a>
+            
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-8">Core Concepts</div>
+            <a href="#require" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">@require & #require</a>
+            <a href="#blocks" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">Template Blocks</a>
+            <a href="#directives" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">Directives</a>
+            <a href="#ajax" class="block py-2 px-3 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors">AJAX</a>
+        </nav>
+    </div>
+</template>
+
+<cscript>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('nav a[href^="#"]');
+        
+        function updateActiveLink() {
+            let current = '';
+            const scrollY = window.pageYOffset + 100;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            if (window.scrollY + windowHeight >= documentHeight - 50) {
+                current = sections[sections.length - 1]?.getAttribute('id');
+            } else {
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    const sectionId = section.getAttribute('id');
+                    
+                    if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+                        current = sectionId;
+                    }
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.classList.remove('bg-emerald-50', 'text-emerald-600');
+                link.classList.add('text-gray-700');
+            });
+
+            if (current) {
+                const activeLink = document.querySelector(`nav a[href="#${current}"]`);
+                if (activeLink) {
+                    activeLink.classList.add('bg-emerald-50', 'text-emerald-600');
+                    activeLink.classList.remove('text-gray-700');
+                }
+            }
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    navLinks.forEach(l => {
+                        l.classList.remove('bg-emerald-50', 'text-emerald-600');
+                        l.classList.add('text-gray-700');
+                    });
+                    this.classList.add('bg-emerald-50', 'text-emerald-600');
+                    this.classList.remove('text-gray-700');
+                    
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    history.pushState(null, null, `#${targetId}`);
+                }
+            });
+        });
+
+        window.addEventListener('scroll', updateActiveLink);
+        
+        updateActiveLink();
+        
+        if (window.location.hash) {
+            const target = document.querySelector(window.location.hash);
+            if (target) {
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            }
+        }
+    });
+</cscript>

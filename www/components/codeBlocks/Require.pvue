@@ -1,0 +1,19 @@
+<template>
+<pre class="text-green-400 text-sm"><code>&lt;script&gt;
+    @require Navbar 'components/Navbar.pvue';
+    #require 'views/index.pvue';
+    #require 'views/about.pvue';
+&lt;/script&gt;
+
+&lt;header&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;link rel="stylesheet" href="assets/css/styles.css"&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"&gt;&lt;/script&gt;
+    &lt;script src="assets/js/jquery-3.7.1.min.js"&gt;&lt;/script&gt;
+&lt;/header&gt;
+
+&lt;template&gt;
+    &lt;Navbar&gt;&lt;/Navbar&gt;
+    &lt;View&gt;&lt;/View&gt;
+&lt;/template&gt;</code></pre>
+</template>

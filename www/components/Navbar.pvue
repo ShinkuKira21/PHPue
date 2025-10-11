@@ -1,6 +1,8 @@
 <script>
     $routes = phpue_navigation();
     $routes = array_reverse($routes, true);
+
+    $current_url = "$_SERVER[REQUEST_URI]";
 </script>
 
 <template>
@@ -16,7 +18,7 @@
                 <!-- Desktop Menu -->
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
-                        <a p-for="$route in $routes" href="{{ $route['url'] }}" class="text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">{{ $route['title'] }}</a>
+                        <a p-for="$route in $routes" href="{{ $route['url'] }}" class="nav-link <?= $current_url === $route['url'] ? 'active' : ''; ?> text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">{{ $route['title'] }}</a>
                     </div>
                 </div>
 
@@ -36,11 +38,7 @@
         <!-- Mobile Menu (Hidden by default) -->
         <div class="md:hidden hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-emerald-600">
-                <a href="/" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</a>
-                <a href="/about" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">About</a>
-                <a href="#" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Features</a>
-                <a href="#" class="text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Docs</a>
-                <a href="#" class="bg-white text-emerald-600 block px-3 py-2 rounded-md text-base font-medium hover:bg-emerald-50 shadow-sm">Get Started</a>
+                <a p-for="$route in $routes" href="{{ $route['url'] }}" class="nav-link <?= $current_url === $route['url'] ? 'active' : ''; ?> text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">{{ $route['title'] }}</a>
             </div>
         </div>
     </nav>
