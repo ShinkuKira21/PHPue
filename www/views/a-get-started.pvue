@@ -1,6 +1,311 @@
+<script>
+    @require StartBuildingCB 'components/codeBlocks/StartBuilding.pvue';
+    @require CreateComponentCB 'components/codeBlocks/CreateComponent.pvue';
+    @require UseComponentCB 'components/codeBlocks/UseComponent.pvue';
+</script>
+
 <header>
     <title>Get Started</title>
-    <meta name="description" content="PHPue leverages PHP server-side rendering, and can create affordable web applications">
-    <meta name="keywords" content="PHP, VUE, PHPue">
+    <meta name="description" content="Get started with PHPue in under a minute. No installation, no configuration, just pure coding joy.">
+    <meta name="keywords" content="PHPue get started, PHPue tutorial, PHPue installation">
     <meta name="author" content="Edward Patch">
 </header>
+
+<template>
+    <!-- Hero Section -->
+    <section class="py-16 bg-gradient-to-br from-phpue-blue to-blue-600 text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                Start Building with <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300">PHPue</span> in 60 Seconds
+            </h1>
+            <p class="text-xl text-blue-100 mb-8">
+                No installation. No configuration. No dependencies. Just pure coding joy.
+            </p>
+            <div class="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm">
+                ⚡ Average setup time: 47 seconds
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">The Fastest Setup in Web Development</h2>
+                <p class="text-lg text-gray-600">Seriously, it's this easy:</p>
+            </div>
+
+            <!-- Step 1 -->
+            <div class="flex flex-col md:flex-row gap-8 items-center mb-12">
+                <div class="flex-shrink-0">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-2xl font-bold text-green-600">
+                        1
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Download the Core Files</h3>
+                    <div class="bg-gray-900 rounded-xl p-6 mb-4">
+                        <div class="flex items-center text-sm text-gray-400 mb-4">
+                            <span>Terminal</span>
+                        </div>
+                        <pre class="text-green-400 text-sm"><code>git clone https://github.com/ShinkuKira21/PHPue my-app
+cd my-app/www</code></pre>
+                    </div>
+                    <p class="text-gray-600">
+                        Or <a href="https://github.com/ShinkuKira21/PHPue" class="text-phpue-blue hover:underline">download manually from GitHub</a> and extract to your web root.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="flex flex-col md:flex-row gap-8 items-center mb-12">
+                <div class="flex-shrink-0">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600">
+                        2
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Start the Development Server</h3>
+                    <div class="bg-gray-900 rounded-xl p-6 mb-4">
+                        <div class="flex items-center text-sm text-gray-400 mb-4">
+                            <span>Terminal</span>
+                        </div>
+                        <pre class="text-green-400 text-sm"><code>php -S localhost:8000</code></pre>
+                    </div>
+                    <p class="text-gray-600">
+                        That's it. Your PHPue app is now running at <code class="bg-gray-100 px-2 py-1 rounded">http://localhost:8000</code>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-2xl font-bold text-purple-600">
+                        3
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Start Building!</h3>
+                    <p class="text-gray-600 mb-4">
+                        Open <code class="bg-gray-100 px-2 py-1 rounded">views/index.pvue</code> in your editor and start coding. 
+                        Changes appear instantly when you refresh.
+                    </p>
+                    <div class="bg-gray-900 rounded-xl p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-4">
+                            <span>views/index.pvue</span>
+                        </div>
+                        <StartBuildingCB></StartBuildingCB>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Structure -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Understand Your Project Structure</h2>
+                <p class="text-lg text-gray-600">Everything is organized intuitively</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                 <div class="bg-white border border-gray-200 rounded-xl p-6">
+                    <h4 class="font-semibold text-lg mb-4">Project Structure</h4>
+                    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400">
+                        <div class="text-gray-400"># Root Directory</div>
+                        <div>www/</div>
+                        <div class="ml-4 text-amber-300">App.pvue</div>
+                        <div class="ml-4 text-amber-300">index.php</div>
+                        <div class="ml-4 text-amber-300">conversion.php</div>
+                        <div class="ml-4 text-amber-300">tailwind.config.js</div>
+                        <div class="ml-4 text-amber-300">pvue-injections.json</div>
+                        <div class="ml-4 text-blue-300">assets/</div>
+                        <div class="ml-8 text-cyan-300">css/</div>
+                        <div class="ml-8 text-cyan-300">js/</div>
+                        <div class="ml-4 text-blue-300">components/</div>
+                        <div class="ml-8 text-cyan-300">dashboards/</div>
+                        <div class="ml-8 text-cyan-300">forms/</div>
+                        <div class="ml-8 text-amber-300">Navbar.pvue</div>
+                        <div class="ml-4 text-blue-300">views/</div>
+                        <div class="ml-8 text-amber-300">index.pvue</div>
+                        <div class="ml-8 text-amber-300">about.pvue</div>
+                        <div class="ml-8 text-amber-300">docs.pvue</div>
+                        <div class="ml-8 text-amber-300">features.pvue</div>
+                        <div class="ml-4 text-purple-300">.dist/</div>
+                        <div class="ml-8 text-gray-400"># Auto-generated files</div>
+                        <div class="ml-8 text-cyan-300">pages/</div>
+                        <div class="ml-8 text-cyan-300">ajax/</div><br>
+                        <div class="ml-8 text-gray-400"># Core files</div>
+                        <div class="ml-8 text-amber-300">App.pvue</div>
+                        <div class="ml-8 text-cyan-300">assets/</div>
+                        <div class="ml-8 text-cyan-300">components/</div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-semibold text-lg mb-3 text-phpue-blue">Key Files</h4>
+                        <ul class="space-y-2 text-gray-700">
+                            <li><strong>App.pvue</strong> - Main app with routing</li>
+                            <li><strong>views/*.pvue</strong> - Your pages</li>
+                            <li><strong>components/</strong> - Reusable components</li>
+                            <li><strong>assets/</strong> - CSS, JS, images</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-3 text-phpue-blue">PVue Files</h4>
+                        <ul class="space-y-2 text-gray-700">
+                            <li><strong>&lt;script&gt;</strong> - PHP logic</li>
+                            <li><strong>&lt;header&gt;</strong> - Meta tags & assets</li>
+                            <li><strong>&lt;template&gt;</strong> - HTML markup</li>
+                            <li><strong>&lt;cscript&gt;</strong> - Client JavaScript</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Build Your First Component</h2>
+            <p class="text-lg text-gray-600">Learn the PHPue way in 5 minutes</p>
+        </div>
+
+        <!-- Step 1: Create Component -->
+        <div class="bg-phpue-blue/5 border border-phpue-blue/20 rounded-xl p-8 mb-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">1. Create Your Component</h3>
+            <div class="bg-gray-900 rounded-xl p-6 mb-4">
+                <div class="flex items-center text-sm text-gray-400 mb-4">
+                    <span>components/WelcomeMessage.pvue</span>
+                </div>
+                <CreateComponentCB></CreateComponentCB>
+            </div>
+            <p class="text-gray-600">
+                <strong>No props needed!</strong> Child components automatically inherit parent variables - because that's how scope should work!
+            </p>
+        </div>
+
+        <!-- Step 2: Use Component -->
+        <div class="bg-green-50 border border-green-200 rounded-xl p-8 mb-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">2. Use Your Component</h3>
+            <div class="bg-gray-900 rounded-xl p-6 mb-4">
+                <div class="flex items-center text-sm text-gray-400 mb-4">
+                    <span>views/index.pvue</span>
+                </div>
+                <UseComponentCB></UseComponentCB>
+            </div>
+            <p class="text-gray-600">
+                The <code class="bg-gray-100 px-1 py-0.5 rounded">$name</code> variable is automatically available in the child component - no configuration required!
+            </p>
+        </div>
+
+        <!-- Result -->
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center">
+            <h3 class="text-2xl font-bold text-emerald-900 mb-4">🎉 You Just Built Your First PHPue Component!</h3>
+            <p class="text-emerald-800 mb-4 text-lg">
+                No build process. No configuration. No props. Just clean, readable code that works instantly.
+            </p>
+            <div class="bg-white rounded-lg p-6 inline-block shadow-lg">
+                <div class="text-sm text-gray-500 mb-2">Live Result:</div>
+                <div class="text-2xl font-bold text-phpue-blue">Hello, PHPue Developer!</div>
+            </div>
+        </div>
+
+        <!-- PHPue Advantage -->
+        <div class="mt-8 bg-purple-50 border border-purple-200 rounded-xl p-6">
+            <h4 class="font-bold text-xl text-purple-900 mb-4 text-center">The PHPue Advantage: No Prop Hell</h4>
+            <div class="grid md:grid-cols-2 gap-6 text-sm">
+                <div class="bg-white rounded-lg p-4 border border-purple-100">
+                    <strong class="text-purple-900 block mb-2">Other Frameworks:</strong>
+                    <ul class="space-y-2 text-purple-800">
+                        <li class="flex items-start">
+                            <span class="text-purple-500 mr-2">•</span>
+                            Prop declarations & validation
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-500 mr-2">•</span>
+                            Prop drilling through components
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-500 mr-2">•</span>
+                            Context providers & dependency injection
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-500 mr-2">•</span>
+                            Complex state management
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-green-100">
+                    <strong class="text-green-900 block mb-2">PHPue:</strong>
+                    <ul class="space-y-2 text-green-800">
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">•</span>
+                            Automatic variable inheritance
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">•</span>
+                            No configuration required
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">•</span>
+                            Natural scope like PHP intended
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">•</span>
+                            It just works intuitively
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <!-- Next Steps -->
+    <section class="py-16 bg-gray-900 text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold mb-6">What's Next?</h2>
+            <p class="text-xl text-gray-300 mb-8">
+                You're ready to build amazing things with PHPue. Here's where to go from here:
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <a href="/docs" class="bg-gray-800 hover:bg-gray-700 rounded-xl p-6 transition-all duration-300 hover:-translate-y-1">
+                    <div class="text-2xl mb-3">📚</div>
+                    <h3 class="font-bold text-lg mb-2">Read the Docs</h3>
+                    <p class="text-gray-400 text-sm">Learn about directives, routing, and advanced features</p>
+                </a>
+                <a href="/features" class="bg-phpue-blue hover:bg-blue-700 rounded-xl p-6 transition-all duration-300 hover:-translate-y-1">
+                    <div class="text-2xl mb-3">⚡</div>
+                    <h3 class="font-bold text-lg mb-2">Explore Features</h3>
+                    <p class="text-blue-100 text-sm">See everything PHPue can do for your projects</p>
+                </a>
+                <a href="https://github.com/ShinkuKira21/PHPue" class="bg-gray-800 hover:bg-gray-700 rounded-xl p-6 transition-all duration-300 hover:-translate-y-1">
+                    <div class="text-2xl mb-3">🐙</div>
+                    <h3 class="font-bold text-lg mb-2">View Source</h3>
+                    <p class="text-gray-400 text-sm">Check out the code on GitHub</p>
+                </a>
+            </div>
+
+            <div class="bg-gray-800 rounded-2xl p-8">
+                <h3 class="text-2xl font-bold text-phpue-blue mb-4">Need Help?</h3>
+                <p class="text-gray-300 mb-4">
+                    PHPue is designed to be intuitive, but we're here if you need us!
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="https://github.com/ShinkuKira21/PHPue/issues" class="bg-phpue-blue hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                        🐛 Report an Issue
+                    </a>
+                    <a href="https://github.com/ShinkuKira21/PHPue/discussions" class="border-2 border-phpue-blue text-phpue-blue hover:bg-phpue-blue hover:text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                        💬 Join Discussion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</template>

@@ -2,7 +2,7 @@
     <!-- $bFillFormBtnHidden declared in parent so can be accessible! BYE BYE properties ! -->
     <div p-if="$bFillFormBtnHidden" class="text-center mb-12">
         <button onclick="showForm('toggleForm')" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors mb-8">
-            Hide Form
+            Hide Form using AJAX Button
         </button>
 
         <!-- Beautiful Tailwind Form -->

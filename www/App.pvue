@@ -1,8 +1,6 @@
 <!-- Author: Edward Patch -->
 <script>
-    @require Navbar 'components/Navbar.pvue';
-    #require 'views/index.pvue';
-    #require 'views/about.pvue';
+    @require Navbar 'components/navigation/Navbar.pvue';
 </script>
 
 <header>

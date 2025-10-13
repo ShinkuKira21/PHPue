@@ -1,0 +1,14 @@
+<template>
+<pre class="text-green-400 text-sm"><code>&lt;script&gt;
+$message = "Hello, PHPue!";
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div class="p-8 text-center"&gt;
+        &lt;h1 class="text-4xl font-bold text-phpue-blue"&gt;
+          &#123;&#123; $message &#125;&#125;
+        &lt;/h1&gt;
+        &lt;p class="text-gray-600 mt-4"&gt;You're running PHPue! 🎉&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+</template>

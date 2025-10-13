@@ -1,6 +1,184 @@
 <header>
-    <title>Sponsers</title>
-    <meta name="description" content="PHPue leverages PHP server-side rendering, and can create affordable web applications">
-    <meta name="keywords" content="PHP, VUE, PHPue">
+    <title>Sponsors</title>
+    <meta name="description" content="Support PHPue development and help bring simplicity back to web development. Become a sponsor today.">
+    <meta name="keywords" content="PHPue sponsors, support PHPue, open source funding">
     <meta name="author" content="Edward Patch">
 </header>
+
+<template>
+    <!-- Hero Section -->
+    <section class="py-16 bg-gradient-to-br from-purple-600 to-indigo-700 text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                Support the <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300">PHPue Revolution</span>
+            </h1>
+            <p class="text-xl text-purple-100 mb-8">
+                Help us bring simplicity back to web development. Your support keeps PHPue free, open, and amazing for everyone.
+            </p>
+            <div class="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm">
+                🚀 100% of funds go toward PHPue development
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Sponsor -->
+    <section class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Why Support PHPue?</h2>
+                <p class="text-lg text-gray-600">Your sponsorship makes a real difference</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 mb-12">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">⚡</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Faster Development</h3>
+                    <p class="text-gray-600">Help us build new features and improve performance</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">📚</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Better Documentation</h3>
+                    <p class="text-gray-600">Fund comprehensive docs and tutorials</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">🌍</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Community Growth</h3>
+                    <p class="text-gray-600">Help spread PHPue to developers worldwide</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sponsorship Tiers -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Sponsorship Tiers</h2>
+                <p class="text-lg text-gray-600">Choose the level that works for you</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Supporter -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">☕ Supporter</h3>
+                    <div class="text-3xl font-bold text-phpue-blue mb-6">$5<span class="text-lg text-gray-500">/month</span></div>
+                    <ul class="space-y-3 text-gray-600 mb-8">
+                        <li>• Your name in our supporters list</li>
+                        <li>• Early access to new features</li>
+                        <li>• Support the project</li>
+                    </ul>
+                    <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg transition-colors">
+                        Become a Supporter
+                    </button>
+                </div>
+
+                <!-- Sponsor -->
+                <div class="bg-white rounded-2xl shadow-xl border-2 border-phpue-blue p-8 text-center transform scale-105">
+                    <div class="inline-block bg-phpue-blue text-white text-sm font-bold px-3 py-1 rounded-full mb-4">
+                        MOST POPULAR
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">🚀 Sponsor</h3>
+                    <div class="text-3xl font-bold text-phpue-blue mb-6">$25<span class="text-lg text-gray-500">/month</span></div>
+                    <ul class="space-y-3 text-gray-600 mb-8">
+                        <li>• Everything in Supporter</li>
+                        <li>• Logo on PHPue website</li>
+                        <li>• Priority support</li>
+                        <li>• Vote on feature priorities</li>
+                    </ul>
+                    <button class="w-full bg-phpue-blue hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                        Become a Sponsor
+                    </button>
+                </div>
+
+                <!-- Partner -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">🏢 Partner</h3>
+                    <div class="text-3xl font-bold text-phpue-blue mb-6">$100<span class="text-lg text-gray-500">/month</span></div>
+                    <ul class="space-y-3 text-gray-600 mb-8">
+                        <li>• Everything in Sponsor</li>
+                        <li>• Prominent logo placement</li>
+                        <li>• Dedicated consulting sessions</li>
+                        <li>• Featured in blog posts</li>
+                    </ul>
+                    <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg transition-colors">
+                        Become a Partner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Current Sponsors -->
+    <section class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Amazing Supporters</h2>
+                <p class="text-lg text-gray-600">The people and companies making PHPue possible</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-2xl p-12 text-center">
+                <div class="text-6xl mb-4">🎯</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Be the First Supporter!</h3>
+                <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                    PHPue is just getting started. Be the first to support this revolution in web development simplicity.
+                </p>
+                <p class="text-sm text-gray-500">
+                    Your name could be here! Help us build something amazing.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- One-Time Support -->
+    <section class="py-16 bg-gradient-to-br from-phpue-blue to-blue-600 text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold mb-6">One-Time Support</h2>
+            <p class="text-xl text-blue-100 mb-8">
+                Prefer to make a one-time contribution? Every bit helps!
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <button class="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    💝 Donate $10
+                </button>
+                <button class="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    💝 Donate $25
+                </button>
+                <button class="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    💝 Donate $50
+                </button>
+                <button class="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    💝 Custom Amount
+                </button>
+            </div>
+            <p class="text-blue-200 text-sm">
+                All contributions go directly toward PHPue development and hosting costs.
+            </p>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="py-16 bg-gray-900 text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold mb-6">Ready to Support Simplicity?</h2>
+            <p class="text-xl text-gray-300 mb-8">
+                Join us in making web development better for everyone.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="bg-phpue-blue hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    🚀 Become a Sponsor
+                </button>
+                <a href="/features" class="border-2 border-phpue-blue text-phpue-blue hover:bg-phpue-blue hover:text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:-translate-y-1">
+                    ⚡ Learn More First
+                </a>
+            </div>
+        </div>
+    </section>
+</template>

@@ -1,0 +1,12 @@
+<template>
+<pre class="text-green-400 text-sm"><code>&lt;script&gt;
+@require WelcomeMessage 'components/WelcomeMessage.pvue';
+$name = "PHPue Developer";
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div class="p-8"&gt;
+        &lt;WelcomeMessage&gt;&lt;/WelcomeMessage&gt;
+    &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+</template>

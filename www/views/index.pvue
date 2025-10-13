@@ -38,29 +38,15 @@
             $_SESSION['bShowUserDetails'] = false;
 
         $_SESSION['bFillFormBtnHidden'] = !$_SESSION['bFillFormBtnHidden'];
-         file_put_contents('debug.txt', "🟢 toggleForm() called\n", FILE_APPEND);
-        file_put_contents('debug.txt', $_SESSION['bFillFormBtnHidden'] . "\n", FILE_APPEND);
     }
     
     @AJAX('POST')
     function saveBtnCounter()
-    { 
-        file_put_contents('debug.txt', "🟢 saveBtnCounter() called\n", FILE_APPEND);
-        file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
-
-        $_SESSION['btnCount'] += 1; 
-
-        file_put_contents('debug.txt', "🟢 BTNCount: " . $_SESSION['btnCount'] . "\n", FILE_APPEND);
-    }
+    { $_SESSION['btnCount'] += 1; }
 
     @AJAX('POST')
     function resetCounter()
-    { 
-        file_put_contents('debug.txt', "🟢 resetCounter() called\n", FILE_APPEND);
-        file_put_contents('debug.txt', "🟢 Session status: " . session_status() . "\n", FILE_APPEND);
-        $_SESSION['btnCount'] = 1; 
-        unset($_SESSION['btnCount']); 
-    }
+    { $_SESSION['btnCount'] = 1; }
 </script>
 
 <header>
@@ -85,7 +71,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
-                    Fill out a Form
+                    Fill out a Form using AJAX Button
                 </div>
             </div>
 
@@ -93,13 +79,14 @@
             <Form></Form>
 
             <!-- PHP Server Side and JS Client Side Counter Button -->
+            <p>Count stores with an AJAX call to PHP Session variable. (Try to Refresh)</p>
             <div class="flex gap-4 p-6">
                <button onclick="incrementCounter('saveBtnCounter')" class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-colors">
                 Count: <span id="btnCounter"></span>
                 </button>
                 
                 <button onclick="resetCounter('resetCounter')" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition-colors">
-                Reset Counter
+                Reset Counter using JS Reactivity
                 </button>
             </div>
 
