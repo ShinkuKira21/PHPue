@@ -69,7 +69,7 @@
                 <!-- Supporter -->
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">
                     <h3 class="text-2xl font-bold text-gray-900 mb-4">☕ Supporter</h3>
-                    <div class="text-3xl font-bold text-phpue-blue mb-6">$5<span class="text-lg text-gray-500">/month</span></div>
+                    <div class="text-3xl font-bold text-phpue-blue mb-6">£5<span class="text-lg text-gray-500">/month</span></div>
                     <ul class="space-y-3 text-gray-600 mb-8">
                         <li>• Your name in our supporters list</li>
                         <li>• Early access to new features</li>
@@ -86,7 +86,7 @@
                         MOST POPULAR
                     </div>
                     <h3 class="text-2xl font-bold text-gray-900 mb-4">🚀 Sponsor</h3>
-                    <div class="text-3xl font-bold text-phpue-blue mb-6">$25<span class="text-lg text-gray-500">/month</span></div>
+                    <div class="text-3xl font-bold text-phpue-blue mb-6">£25<span class="text-lg text-gray-500">/month</span></div>
                     <ul class="space-y-3 text-gray-600 mb-8">
                         <li>• Everything in Supporter</li>
                         <li>• Logo on PHPue website</li>
@@ -101,7 +101,7 @@
                 <!-- Partner -->
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">
                     <h3 class="text-2xl font-bold text-gray-900 mb-4">🏢 Partner</h3>
-                    <div class="text-3xl font-bold text-phpue-blue mb-6">$100<span class="text-lg text-gray-500">/month</span></div>
+                    <div class="text-3xl font-bold text-phpue-blue mb-6">£100<span class="text-lg text-gray-500">/month</span></div>
                     <ul class="space-y-3 text-gray-600 mb-8">
                         <li>• Everything in Sponsor</li>
                         <li>• Prominent logo placement</li>
