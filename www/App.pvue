@@ -1,6 +1,14 @@
 <!-- Author: Edward Patch -->
 <script>
     @require Navbar 'components/navigation/Navbar.pvue';
+
+    #require 'views/index.pvue';
+    #require 'views/about.pvue';
+    #require 'views/features.pvue';
+    #require 'views/docs.pvue';
+    #require 'views/a-get-started.pvue';
+    #require 'views/b-sponser.pvue';
+    #require 'views/c-philosophy.pvue';
 </script>
 
 <header>
