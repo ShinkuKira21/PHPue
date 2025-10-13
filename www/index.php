@@ -102,18 +102,40 @@
 
         private function serveApp()
         {
+            // Check if .dist directory exists and has App.php
+            $distApp = '.dist/App.php';
             $appPVue = 'App.pvue';
             
-            if(file_exists($appPVue)) {
-                $this->preProcessAllViewsForAjax();
-
-                $phpCode = convert_pvue_file($appPVue, true);
-
-                eval('?>' . $phpCode);
+            if(file_exists($distApp) && is_dir('.dist')) {
+                // Serve from built .dist directory
+                $this->serveFromDist();
+            } elseif(file_exists($appPVue)) {
+                // Serve from source .pvue files (development mode)
+                $this->serveFromSource();
             } else {
                 http_response_code(500);
-                echo "Error: App.pvue not found";
+                echo "Error: Neither App.pvue nor .dist/App.php found";
             }
+        }
+        
+        private function serveFromDist() {
+            $distApp = '.dist/App.php';
+            
+            if(file_exists($distApp)) {
+                // Include the built App.php
+                include $distApp;
+            } else {
+                http_response_code(500);
+                echo "Error: .dist/App.php not found";
+            }
+        }
+        
+        private function serveFromSource() {
+            $appPVue = 'App.pvue';
+            
+            $this->preProcessAllViewsForAjax();
+            $phpCode = convert_pvue_file($appPVue, true);
+            eval('?>' . $phpCode);
         }
         
         private function preProcessAllViewsForAjax() {
