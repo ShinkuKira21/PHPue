@@ -34,13 +34,6 @@ PHPue combines the simplicity of PHP with Vue-like templating syntax to create f
         </ul>
     </nav>
 </template>
-
-<cscript>
-    // Client-side JavaScript for interactivity
-    document.querySelectorAll('nav a').forEach(link => {
-        link.addEventListener('click', handleNavigation);
-    });
-</cscript>
 ```
 
 **Vue's Style Setup Tag**
