@@ -16,13 +16,37 @@
         
         public function addCompiledView($phpFilePath) {
             $viewName = basename($phpFilePath, '.php');
+            
+            // Extract header from compiled PHP file
+            $headerContent = $this->extractHeaderFromCompiled($phpFilePath);
+            
             $this->routes[$viewName] = [
                 'file' => $phpFilePath,
                 'compiled' => $phpFilePath,
                 'route' => $viewName === 'index' ? '/' : "/$viewName",
-                'header' => [] 
+                'header' => $this->extractMetaData($headerContent)
             ];
         }
+
+        private function extractHeaderFromCompiled($phpFile) {
+        if (!file_exists($phpFile)) return '';
+        
+        $content = file_get_contents($phpFile);
+        
+        // Look for the header in the compiled PHP output
+        // This pattern matches the header content in the PHP string
+        if (preg_match('/\\$phpue_header\s*=\s*<<<\s*HTML\s*(.*?)\s*HTML/s', $content, $matches)) {
+            return $matches[1] ?? '';
+        }
+        
+        // Alternative: Look for header in the HTML output section
+        if (preg_match('/<head>.*?<title>(.*?)<\/title>.*?<\/head>/s', $content, $matches)) {
+            return $matches[0] ?? '';
+        }
+        
+        return '';
+    }
+
         
         private function extractHeaderContent($pvueFile) {
             if (!file_exists($pvueFile)) return '';
@@ -687,7 +711,14 @@
             $output = "<?php\n";
 
             $output .= "// Auto-load backend classes\n";
-            $output .= "\$backendDir = defined('PHPUE_BUILD_MODE') ? 'backend' : '.dist/backend';\n";
+            $output .= "// Determine correct backend path for current environment\n";
+            $output .= "if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {\n";
+            $output .= "    // Build mode: use source backend\n";
+            $output .= "    \$backendDir = 'backend';\n";
+            $output .= "} else {\n";
+            $output .= "    // Runtime: check if we're in development or production\n";
+            $output .= "    \$backendDir = is_dir('.dist/backend') ? '.dist/backend' : 'backend';\n";
+            $output .= "}\n";
             $output .= "if (is_dir(\$backendDir)) {\n";
             $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
             $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
