@@ -687,7 +687,21 @@
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
-                
+
+            // Add backend autoloading to ALL compiled files
+            $output .= "// Auto-load backend classes\n";
+            $output .= "\$backendDir = defined('PHPUE_BUILD_MODE') ? 'backend' : '.dist/backend';\n";
+            $output .= "if (is_dir(\$backendDir)) {\n";
+            $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
+            $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
+            $output .= "    );\n";
+            $output .= "    foreach (\$iterator as \$file) {\n";
+            $output .= "        if (\$file->getExtension() === 'php') {\n";
+            $output .= "            require_once \$file->getPathname();\n";
+            $output .= "        }\n";
+            $output .= "    }\n";
+            $output .= "}\n\n";
+            
             if ($bRoot) {
                 if (!str_contains($script, 'session_start()')) {
                     $output .= "// Auto session management\n";
