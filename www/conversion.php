@@ -14,6 +14,40 @@
             ];
         }
         
+        public function addCompiledView($phpFilePath) {
+            $viewName = basename($phpFilePath, '.php');
+            
+            // Extract header from compiled PHP file
+            $headerContent = $this->extractHeaderFromCompiled($phpFilePath);
+            
+            $this->routes[$viewName] = [
+                'file' => $phpFilePath,
+                'compiled' => $phpFilePath,
+                'route' => $viewName === 'index' ? '/' : "/$viewName",
+                'header' => $this->extractMetaData($headerContent)
+            ];
+        }
+
+        private function extractHeaderFromCompiled($phpFile) {
+        if (!file_exists($phpFile)) return '';
+        
+        $content = file_get_contents($phpFile);
+        
+        // Look for the header in the compiled PHP output
+        // This pattern matches the header content in the PHP string
+        if (preg_match('/\\$phpue_header\s*=\s*<<<\s*HTML\s*(.*?)\s*HTML/s', $content, $matches)) {
+            return $matches[1] ?? '';
+        }
+        
+        // Alternative: Look for header in the HTML output section
+        if (preg_match('/<head>.*?<title>(.*?)<\/title>.*?<\/head>/s', $content, $matches)) {
+            return $matches[0] ?? '';
+        }
+        
+        return '';
+    }
+
+        
         private function extractHeaderContent($pvueFile) {
             if (!file_exists($pvueFile)) return '';
             
@@ -73,13 +107,34 @@
         }
         
         public function getCurrentPageContent() {
+            $currentRoute = $_GET['page'] ?? 'index';
+            
             if (isset($GLOBALS['phpue_current_page_code'])) {
                 ob_start();
                 eval('?>' . $GLOBALS['phpue_current_page_code']);
                 return ob_get_clean();
             }
             
-            $currentRoute = $_GET['page'] ?? 'index';
+            // Check if route exists and serve compiled PHP file
+            if (isset($this->routes[$currentRoute])) {
+                $route = $this->routes[$currentRoute];
+                $compiledFile = $route['compiled'];
+                
+                if (file_exists($compiledFile)) {
+                    ob_start();
+                    include $compiledFile;
+                    return ob_get_clean();
+                }
+            }
+            
+            // Fallback: check for compiled index.php
+            $compiledIndex = '.dist/pages/index.php';
+            if (file_exists($compiledIndex)) {
+                ob_start();
+                include $compiledIndex;
+                return ob_get_clean();
+            }
+            
             return "<div>Page not found: $currentRoute</div>";
         }
         
@@ -141,6 +196,7 @@
             return $headerContent;
         }
     }
+
 
     class PHPueConverter {   
         private $routing;
@@ -653,7 +709,27 @@
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
-                
+
+            $output .= "// Auto-load backend classes\n";
+            $output .= "// Determine correct backend path for current environment\n";
+            $output .= "if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {\n";
+            $output .= "    // Build mode: use source backend\n";
+            $output .= "    \$backendDir = 'backend';\n";
+            $output .= "} else {\n";
+            $output .= "    // Runtime: check if we're in development or production\n";
+            $output .= "    \$backendDir = is_dir('.dist/backend') ? '.dist/backend' : 'backend';\n";
+            $output .= "}\n";
+            $output .= "if (is_dir(\$backendDir)) {\n";
+            $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
+            $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
+            $output .= "    );\n";
+            $output .= "    foreach (\$iterator as \$file) {\n";
+            $output .= "        if (\$file->getExtension() === 'php') {\n";
+            $output .= "            require_once \$file->getPathname();\n";
+            $output .= "        }\n";
+            $output .= "    }\n";
+            $output .= "}\n\n";
+                        
             if ($bRoot) {
                 if (!str_contains($script, 'session_start()')) {
                     $output .= "// Auto session management\n";
@@ -775,13 +851,21 @@
         return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath);
     }
 
-    function get_phpue_routing() {
+  function get_phpue_routing() {
         static $converter = null;
         if ($converter === null) {
             $converter = new PHPueConverter();
             
             $routing = $converter->getRouting();
-            if (empty($routing->routes)) {
+            
+            $distAppExists = file_exists('.dist/App.php');
+            
+            if ($distAppExists) {
+                $compiledPages = glob('.dist/pages/*.php');
+                foreach ($compiledPages as $page) {
+                    $routing->addCompiledView($page);
+                }
+            } else {
                 $views = glob('views/*.pvue');
                 foreach ($views as $view) {
                     $routing->addView($view);
@@ -789,8 +873,11 @@
             }
             
             $currentRoute = $_GET['page'] ?? 'index';
-            $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
-            $routing->preProcessCurrentPage($sourceFile);
+            
+            if (!$distAppExists) {
+                $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+                $routing->preProcessCurrentPage($sourceFile);
+            }
         }
         return $converter->getRouting();
     }
