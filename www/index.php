@@ -46,6 +46,9 @@
             if (!is_dir($distDir . '/ajax')) {
                 mkdir($distDir . '/ajax', 0755, true);
             }
+            if (!is_dir($distDir . '/backend')) {
+                mkdir($distDir . '/backend', 0755, true);
+            }
         }
 
         private function detectDevMode() {
@@ -64,6 +67,7 @@
                     glob('*.pvue'),
                     glob('components/*.pvue'),
                     glob('views/*.pvue'),
+                    glob('backend/*.php')
                 );
 
                 $bChanged = false;
@@ -102,15 +106,12 @@
 
         private function serveApp()
         {
-            // Check if .dist directory exists and has App.php
             $distApp = '.dist/App.php';
             $appPVue = 'App.pvue';
             
             if(file_exists($distApp) && is_dir('.dist')) {
-                // Serve from built .dist directory
                 $this->serveFromDist();
             } elseif(file_exists($appPVue)) {
-                // Serve from source .pvue files (development mode)
                 $this->serveFromSource();
             } else {
                 http_response_code(500);
@@ -122,7 +123,6 @@
             $distApp = '.dist/App.php';
             
             if(file_exists($distApp)) {
-                // Include the built App.php
                 include $distApp;
             } else {
                 http_response_code(500);
@@ -161,6 +161,8 @@
 
         private function compileAllFiles() {
             $this->ensureDistDirectory();
+            
+            $this->copyBackendLoaders();
             
             $appPVue = 'App.pvue';
             $appPHP = '.dist/App.php';
@@ -205,6 +207,18 @@
             echo "✅ Generated AJAX handler files\n";
 
             $this->copyAssetsToDist();
+        }
+
+        private function copyBackendLoaders() {
+            $backendDir = 'backend';
+            $distBackendDir = '.dist/backend';
+            
+            if (is_dir($backendDir)) {
+                $this->copyDirectory($backendDir, $distBackendDir);
+                echo "✅ Copied backend to .dist/backend/\n";
+            } else {
+                echo "ℹ️ No backend directory found\n";
+            }
         }
 
         private function copyAssetsToDist() {
