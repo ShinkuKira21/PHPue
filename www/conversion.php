@@ -14,17 +14,6 @@
             ];
         }
         
-        // Add this method to handle compiled PHP files
-        public function addCompiledView($phpFilePath) {
-            $viewName = basename($phpFilePath, '.php');
-            $this->routes[$viewName] = [
-                'file' => $phpFilePath,
-                'compiled' => $phpFilePath,
-                'route' => $viewName === 'index' ? '/' : "/$viewName",
-                'header' => [] // You might want to extract header from compiled files if needed
-            ];
-        }
-        
         private function extractHeaderContent($pvueFile) {
             if (!file_exists($pvueFile)) return '';
             
@@ -84,35 +73,13 @@
         }
         
         public function getCurrentPageContent() {
-            $currentRoute = $_GET['page'] ?? 'index';
-            
-            // First check if we have pre-processed code
             if (isset($GLOBALS['phpue_current_page_code'])) {
                 ob_start();
                 eval('?>' . $GLOBALS['phpue_current_page_code']);
                 return ob_get_clean();
             }
             
-            // Check if route exists and serve compiled PHP file
-            if (isset($this->routes[$currentRoute])) {
-                $route = $this->routes[$currentRoute];
-                $compiledFile = $route['compiled'];
-                
-                if (file_exists($compiledFile)) {
-                    ob_start();
-                    include $compiledFile;
-                    return ob_get_clean();
-                }
-            }
-            
-            // Fallback: check for compiled index.php
-            $compiledIndex = '.dist/pages/index.php';
-            if (file_exists($compiledIndex)) {
-                ob_start();
-                include $compiledIndex;
-                return ob_get_clean();
-            }
-            
+            $currentRoute = $_GET['page'] ?? 'index';
             return "<div>Page not found: $currentRoute</div>";
         }
         
@@ -174,7 +141,6 @@
             return $headerContent;
         }
     }
-
 
     class PHPueConverter {   
         private $routing;
@@ -809,24 +775,13 @@
         return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath);
     }
 
-  function get_phpue_routing() {
+    function get_phpue_routing() {
         static $converter = null;
         if ($converter === null) {
             $converter = new PHPueConverter();
             
             $routing = $converter->getRouting();
-            
-            // Check if we're in production mode (serving from .dist/)
-            $distAppExists = file_exists('.dist/App.php');
-            
-            if ($distAppExists) {
-                // Production mode: load from compiled PHP files
-                $compiledPages = glob('.dist/pages/*.php');
-                foreach ($compiledPages as $page) {
-                    $routing->addCompiledView($page);
-                }
-            } else {
-                // Development mode: load from .pvue files
+            if (empty($routing->routes)) {
                 $views = glob('views/*.pvue');
                 foreach ($views as $view) {
                     $routing->addView($view);
@@ -834,12 +789,8 @@
             }
             
             $currentRoute = $_GET['page'] ?? 'index';
-            
-            // In production mode, we don't need to pre-process since files are already compiled
-            if (!$distAppExists) {
-                $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
-                $routing->preProcessCurrentPage($sourceFile);
-            }
+            $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
+            $routing->preProcessCurrentPage($sourceFile);
         }
         return $converter->getRouting();
     }

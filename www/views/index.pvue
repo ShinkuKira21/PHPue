@@ -2,6 +2,9 @@
 <script>
     @require UserDetailsDashboard 'components/dashboards/indexUserDetails.pvue';
     @require Form 'components/forms/indexForm.pvue';
+
+    $lang = load_lang('english');
+
     // yes, PHP is age 1995, but also JS is...
     // I wanted to have 2 different numbers, so
     // you can see what the difference is on Tech Demo.
@@ -75,8 +78,8 @@
         <div class="max-w-4xl mx-auto px-8 sm:px-12 md:px-16 lg:px-24">
             <!-- Header -->
             <div class="text-center mb-12">
-                <h1 class="text-4xl font-bold text-gray-800 mb-4">🚀 PHPue - THE PHP RENAISSANCE IS HERE!</h1>
-                <p class="text-lg text-gray-600">PHPue Demo - Server-side rendering with Vue-like syntax</p>
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">{{ $lang['home_heroText'] }}</h1>
+                <p class="text-lg text-gray-600">{{ $lang['home_heroSubtitle'] }}</p>
             </div>
 
              <!-- Fill Out a Form Button -->
