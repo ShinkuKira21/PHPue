@@ -14,16 +14,39 @@
             ];
         }
         
-        // Add this method to handle compiled PHP files
         public function addCompiledView($phpFilePath) {
             $viewName = basename($phpFilePath, '.php');
+            
+            // Extract header from compiled PHP file
+            $headerContent = $this->extractHeaderFromCompiled($phpFilePath);
+            
             $this->routes[$viewName] = [
                 'file' => $phpFilePath,
                 'compiled' => $phpFilePath,
                 'route' => $viewName === 'index' ? '/' : "/$viewName",
-                'header' => [] // You might want to extract header from compiled files if needed
+                'header' => $this->extractMetaData($headerContent)
             ];
         }
+
+        private function extractHeaderFromCompiled($phpFile) {
+        if (!file_exists($phpFile)) return '';
+        
+        $content = file_get_contents($phpFile);
+        
+        // Look for the header in the compiled PHP output
+        // This pattern matches the header content in the PHP string
+        if (preg_match('/\\$phpue_header\s*=\s*<<<\s*HTML\s*(.*?)\s*HTML/s', $content, $matches)) {
+            return $matches[1] ?? '';
+        }
+        
+        // Alternative: Look for header in the HTML output section
+        if (preg_match('/<head>.*?<title>(.*?)<\/title>.*?<\/head>/s', $content, $matches)) {
+            return $matches[0] ?? '';
+        }
+        
+        return '';
+    }
+
         
         private function extractHeaderContent($pvueFile) {
             if (!file_exists($pvueFile)) return '';
@@ -86,7 +109,6 @@
         public function getCurrentPageContent() {
             $currentRoute = $_GET['page'] ?? 'index';
             
-            // First check if we have pre-processed code
             if (isset($GLOBALS['phpue_current_page_code'])) {
                 ob_start();
                 eval('?>' . $GLOBALS['phpue_current_page_code']);
@@ -687,7 +709,27 @@
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
-                
+
+            $output .= "// Auto-load backend classes\n";
+            $output .= "// Determine correct backend path for current environment\n";
+            $output .= "if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {\n";
+            $output .= "    // Build mode: use source backend\n";
+            $output .= "    \$backendDir = 'backend';\n";
+            $output .= "} else {\n";
+            $output .= "    // Runtime: check if we're in development or production\n";
+            $output .= "    \$backendDir = is_dir('.dist/backend') ? '.dist/backend' : 'backend';\n";
+            $output .= "}\n";
+            $output .= "if (is_dir(\$backendDir)) {\n";
+            $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
+            $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
+            $output .= "    );\n";
+            $output .= "    foreach (\$iterator as \$file) {\n";
+            $output .= "        if (\$file->getExtension() === 'php') {\n";
+            $output .= "            require_once \$file->getPathname();\n";
+            $output .= "        }\n";
+            $output .= "    }\n";
+            $output .= "}\n\n";
+                        
             if ($bRoot) {
                 if (!str_contains($script, 'session_start()')) {
                     $output .= "// Auto session management\n";
@@ -816,17 +858,14 @@
             
             $routing = $converter->getRouting();
             
-            // Check if we're in production mode (serving from .dist/)
             $distAppExists = file_exists('.dist/App.php');
             
             if ($distAppExists) {
-                // Production mode: load from compiled PHP files
                 $compiledPages = glob('.dist/pages/*.php');
                 foreach ($compiledPages as $page) {
                     $routing->addCompiledView($page);
                 }
             } else {
-                // Development mode: load from .pvue files
                 $views = glob('views/*.pvue');
                 foreach ($views as $view) {
                     $routing->addView($view);
@@ -835,7 +874,6 @@
             
             $currentRoute = $_GET['page'] ?? 'index';
             
-            // In production mode, we don't need to pre-process since files are already compiled
             if (!$distAppExists) {
                 $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
                 $routing->preProcessCurrentPage($sourceFile);
