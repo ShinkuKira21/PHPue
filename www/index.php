@@ -67,7 +67,7 @@
                     glob('*.pvue'),
                     glob('components/*.pvue'),
                     glob('views/*.pvue'),
-                    glob('backend/*.php') // Watch backend files too!
+                    glob('backend/*.php')
                 );
 
                 $bChanged = false;
@@ -106,15 +106,12 @@
 
         private function serveApp()
         {
-            // Check if .dist directory exists and has App.php
             $distApp = '.dist/App.php';
             $appPVue = 'App.pvue';
             
             if(file_exists($distApp) && is_dir('.dist')) {
-                // Serve from built .dist directory
                 $this->serveFromDist();
             } elseif(file_exists($appPVue)) {
-                // Serve from source .pvue files (development mode)
                 $this->serveFromSource();
             } else {
                 http_response_code(500);
@@ -125,11 +122,7 @@
         private function serveFromDist() {
             $distApp = '.dist/App.php';
             
-            // Auto-load backend classes in production
-            $this->autoLoadBackendClasses();
-            
             if(file_exists($distApp)) {
-                // Include the built App.php
                 include $distApp;
             } else {
                 http_response_code(500);
@@ -140,29 +133,9 @@
         private function serveFromSource() {
             $appPVue = 'App.pvue';
             
-            // Auto-load backend classes in development
-            $this->autoLoadBackendClasses();
-            
             $this->preProcessAllViewsForAjax();
             $phpCode = convert_pvue_file($appPVue, true);
             eval('?>' . $phpCode);
-        }
-        
-        private function autoLoadBackendClasses() {
-            // Development mode - load from source
-            $backendDir = $this->bDevMode ? 'backend' : '.dist/backend';
-            
-            if (!is_dir($backendDir)) return;
-            
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($backendDir, RecursiveDirectoryIterator::SKIP_DOTS)
-            );
-            
-            foreach ($iterator as $file) {
-                if ($file->getExtension() === 'php') {
-                    require_once $file->getPathname();
-                }
-            }
         }
         
         private function preProcessAllViewsForAjax() {
@@ -189,7 +162,6 @@
         private function compileAllFiles() {
             $this->ensureDistDirectory();
             
-            // Copy backend FIRST so they're available during compilation
             $this->copyBackendLoaders();
             
             $appPVue = 'App.pvue';

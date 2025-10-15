@@ -14,14 +14,13 @@
             ];
         }
         
-        // Add this method to handle compiled PHP files
         public function addCompiledView($phpFilePath) {
             $viewName = basename($phpFilePath, '.php');
             $this->routes[$viewName] = [
                 'file' => $phpFilePath,
                 'compiled' => $phpFilePath,
                 'route' => $viewName === 'index' ? '/' : "/$viewName",
-                'header' => [] // You might want to extract header from compiled files if needed
+                'header' => [] 
             ];
         }
         
@@ -86,7 +85,6 @@
         public function getCurrentPageContent() {
             $currentRoute = $_GET['page'] ?? 'index';
             
-            // First check if we have pre-processed code
             if (isset($GLOBALS['phpue_current_page_code'])) {
                 ob_start();
                 eval('?>' . $GLOBALS['phpue_current_page_code']);
@@ -688,7 +686,6 @@
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
 
-            // Add backend autoloading to ALL compiled files
             $output .= "// Auto-load backend classes\n";
             $output .= "\$backendDir = defined('PHPUE_BUILD_MODE') ? 'backend' : '.dist/backend';\n";
             $output .= "if (is_dir(\$backendDir)) {\n";
@@ -701,7 +698,7 @@
             $output .= "        }\n";
             $output .= "    }\n";
             $output .= "}\n\n";
-            
+                        
             if ($bRoot) {
                 if (!str_contains($script, 'session_start()')) {
                     $output .= "// Auto session management\n";
@@ -830,17 +827,14 @@
             
             $routing = $converter->getRouting();
             
-            // Check if we're in production mode (serving from .dist/)
             $distAppExists = file_exists('.dist/App.php');
             
             if ($distAppExists) {
-                // Production mode: load from compiled PHP files
                 $compiledPages = glob('.dist/pages/*.php');
                 foreach ($compiledPages as $page) {
                     $routing->addCompiledView($page);
                 }
             } else {
-                // Development mode: load from .pvue files
                 $views = glob('views/*.pvue');
                 foreach ($views as $view) {
                     $routing->addView($view);
@@ -849,7 +843,6 @@
             
             $currentRoute = $_GET['page'] ?? 'index';
             
-            // In production mode, we don't need to pre-process since files are already compiled
             if (!$distAppExists) {
                 $sourceFile = $routing->routes[$currentRoute]['file'] ?? 'views/index.pvue';
                 $routing->preProcessCurrentPage($sourceFile);
