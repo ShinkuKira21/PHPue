@@ -46,6 +46,9 @@
             if (!is_dir($distDir . '/ajax')) {
                 mkdir($distDir . '/ajax', 0755, true);
             }
+            if (!is_dir($distDir . '/backend')) {
+                mkdir($distDir . '/backend', 0755, true);
+            }
         }
 
         private function detectDevMode() {
@@ -64,6 +67,7 @@
                     glob('*.pvue'),
                     glob('components/*.pvue'),
                     glob('views/*.pvue'),
+                    glob('backend/*.php') // Watch backend files too!
                 );
 
                 $bChanged = false;
@@ -102,17 +106,62 @@
 
         private function serveApp()
         {
+            // Check if .dist directory exists and has App.php
+            $distApp = '.dist/App.php';
             $appPVue = 'App.pvue';
             
-            if(file_exists($appPVue)) {
-                $this->preProcessAllViewsForAjax();
-
-                $phpCode = convert_pvue_file($appPVue, true);
-
-                eval('?>' . $phpCode);
+            if(file_exists($distApp) && is_dir('.dist')) {
+                // Serve from built .dist directory
+                $this->serveFromDist();
+            } elseif(file_exists($appPVue)) {
+                // Serve from source .pvue files (development mode)
+                $this->serveFromSource();
             } else {
                 http_response_code(500);
-                echo "Error: App.pvue not found";
+                echo "Error: Neither App.pvue nor .dist/App.php found";
+            }
+        }
+        
+        private function serveFromDist() {
+            $distApp = '.dist/App.php';
+            
+            // Auto-load backend classes in production
+            $this->autoLoadBackendClasses();
+            
+            if(file_exists($distApp)) {
+                // Include the built App.php
+                include $distApp;
+            } else {
+                http_response_code(500);
+                echo "Error: .dist/App.php not found";
+            }
+        }
+        
+        private function serveFromSource() {
+            $appPVue = 'App.pvue';
+            
+            // Auto-load backend classes in development
+            $this->autoLoadBackendClasses();
+            
+            $this->preProcessAllViewsForAjax();
+            $phpCode = convert_pvue_file($appPVue, true);
+            eval('?>' . $phpCode);
+        }
+        
+        private function autoLoadBackendClasses() {
+            // Development mode - load from source
+            $backendDir = $this->bDevMode ? 'backend' : '.dist/backend';
+            
+            if (!is_dir($backendDir)) return;
+            
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($backendDir, RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+            
+            foreach ($iterator as $file) {
+                if ($file->getExtension() === 'php') {
+                    require_once $file->getPathname();
+                }
             }
         }
         
@@ -139,6 +188,9 @@
 
         private function compileAllFiles() {
             $this->ensureDistDirectory();
+            
+            // Copy backend FIRST so they're available during compilation
+            $this->copyBackendLoaders();
             
             $appPVue = 'App.pvue';
             $appPHP = '.dist/App.php';
@@ -183,6 +235,18 @@
             echo "✅ Generated AJAX handler files\n";
 
             $this->copyAssetsToDist();
+        }
+
+        private function copyBackendLoaders() {
+            $backendDir = 'backend';
+            $distBackendDir = '.dist/backend';
+            
+            if (is_dir($backendDir)) {
+                $this->copyDirectory($backendDir, $distBackendDir);
+                echo "✅ Copied backend to .dist/backend/\n";
+            } else {
+                echo "ℹ️ No backend directory found\n";
+            }
         }
 
         private function copyAssetsToDist() {
