@@ -548,6 +548,8 @@
             
             $componentMap = [];
             $requiredComponents = [];
+            $componentScripts = [];
+            $componentCscripts = [];
             
             foreach ($componentRequires as $match) {
                 $componentName = $match[1];
@@ -557,14 +559,41 @@
                 if (file_exists($componentPath)) {
                     $componentContent = file_get_contents($componentPath);
                     
-                    $compiledComponent = $this->convertPVueToPHP($componentContent, false, $componentPath);
+                    // Extract ONLY the template for injection into the template
+                    $template = $this->extractBetween($componentContent, '<template>', '</template>');
+                    $convertedTemplate = $this->convertVueSyntax($template);
                     
-                    $componentMap[$componentName] = $compiledComponent;
+                    $componentMap[$componentName] = $convertedTemplate;
+                    
+                    // Extract scripts to include only once in the main script section
+                    $componentScript = $this->extractBetween($componentContent, '<script setup>', '</script>');
+                    if (empty(trim($componentScript))) {
+                        $componentScript = $this->extractBetween($componentContent, '<script>', '</script>');
+                    }
+                    
+                    $componentCscript = $this->extractBetween($componentContent, '<cscript>', '</cscript>');
+                    
+                    // Store scripts to be included in the main output
+                    if (!empty(trim($componentScript))) {
+                        $componentScripts[] = "// Component Script: $componentName";
+                        $componentScripts[] = $componentScript;
+                    }
+                    
+                    if (!empty(trim($componentCscript))) {
+                        $componentCscripts[] = "// Component CScript: $componentName";
+                        $componentCscripts[] = $componentCscript;
+                    }
                     
                     $scriptContent = str_replace($match[0], "// Component '$componentName' loaded from '$componentPath'", $scriptContent);
                 } else {
                     $scriptContent = str_replace($match[0], "// ERROR: Component file not found: $componentPath", $scriptContent);
                 }
+            }
+            
+            // Store component scripts in global for later inclusion
+            if (!empty($componentScripts) || !empty($componentCscripts)) {
+                $GLOBALS['phpue_component_scripts'] = $componentScripts;
+                $GLOBALS['phpue_component_cscripts'] = $componentCscripts;
             }
 
             $lines = explode("\n", $scriptContent);
@@ -709,7 +738,7 @@
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
-                        
+                                
             if ($bRoot) {
                 $output .= "// Auto-load backend classes\n";
                 $output .= "// Determine correct backend path for current environment\n";
@@ -736,6 +765,16 @@
                     $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
                     $output .= "    @session_start();\n";
                     $output .= "}\n";
+                }
+
+                // Include component PHP scripts only once at the root level
+                if (isset($GLOBALS['phpue_component_scripts']) && !empty($GLOBALS['phpue_component_scripts'])) {
+                    $output .= "// Component PHP Scripts\n";
+                    foreach ($GLOBALS['phpue_component_scripts'] as $componentScript) {
+                        $output .= $componentScript . "\n";
+                    }
+                    // Clear to avoid processing in other builds
+                    unset($GLOBALS['phpue_component_scripts']);
                 }
 
                 $output .= "// Load AJAX handlers\n";
@@ -787,15 +826,15 @@
                 $output .= "        }\n";
                 $output .= "    }\n";
                 $output .= "}\n\n";
-
-                $output .= $script . "\n";
             }
-                                            
+            
+            // Include the main script content
+            $output .= $script . "\n";
+                                                    
             if (!empty($header)) {
                 $output .= "\$phpue_header = <<<HTML\n{$header}\nHTML;\n";
             }
             
-            $output .= $script . "\n";
             $output .= "?>\n";
 
             if ($bRoot) {
@@ -820,12 +859,28 @@
                 $output .= "</head>\n";
                 $output .= "<body>\n";
                 $output .= $template . "\n";
+                
+                // Include component JavaScript (cscript) only once at the end
+                if (isset($GLOBALS['phpue_component_cscripts']) && !empty($GLOBALS['phpue_component_cscripts'])) {
+                    $output .= "<!-- Component JavaScript -->\n";
+                    foreach ($GLOBALS['phpue_component_cscripts'] as $componentCscript) {
+                        if (strpos($componentCscript, '// Component CScript:') === 0) {
+                            $output .= "<!-- " . $componentCscript . " -->\n";
+                        } else {
+                            $convertedCscript = $this->handleCscript($componentCscript);
+                            $output .= $convertedCscript . "\n";
+                        }
+                    }
+                    unset($GLOBALS['phpue_component_cscripts']);
+                }
+                
                 $output .= $cscript . "\n";
                 $output .= "</body>\n";
                 $output .= "</html>\n";
             } else {
+                // For components, only output template (scripts are handled at root level)
                 $output .= $template . "\n";
-                $output .= $cscript . "\n";
+                // Don't include cscript for components - it's handled at root level
             }
             
             return $output;
