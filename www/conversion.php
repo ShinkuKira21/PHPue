@@ -709,28 +709,28 @@
                 
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
-
-            $output .= "// Auto-load backend classes\n";
-            $output .= "// Determine correct backend path for current environment\n";
-            $output .= "if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {\n";
-            $output .= "    // Build mode: use source backend\n";
-            $output .= "    \$backendDir = 'backend';\n";
-            $output .= "} else {\n";
-            $output .= "    // Runtime: check if we're in development or production\n";
-            $output .= "    \$backendDir = is_dir('.dist/backend') ? '.dist/backend' : 'backend';\n";
-            $output .= "}\n";
-            $output .= "if (is_dir(\$backendDir)) {\n";
-            $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
-            $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
-            $output .= "    );\n";
-            $output .= "    foreach (\$iterator as \$file) {\n";
-            $output .= "        if (\$file->getExtension() === 'php') {\n";
-            $output .= "            require_once \$file->getPathname();\n";
-            $output .= "        }\n";
-            $output .= "    }\n";
-            $output .= "}\n\n";
                         
             if ($bRoot) {
+                $output .= "// Auto-load backend classes\n";
+                $output .= "// Determine correct backend path for current environment\n";
+                $output .= "if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {\n";
+                $output .= "    // Build mode: use source backend\n";
+                $output .= "    \$backendDir = 'backend';\n";
+                $output .= "} else {\n";
+                $output .= "    // Runtime: check if we're in development or production\n";
+                $output .= "    \$backendDir = is_dir('.dist/backend') ? '.dist/backend' : 'backend';\n";
+                $output .= "}\n";
+                $output .= "if (is_dir(\$backendDir)) {\n";
+                $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
+                $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
+                $output .= "    );\n";
+                $output .= "    foreach (\$iterator as \$file) {\n";
+                $output .= "        if (\$file->getExtension() === 'php') {\n";
+                $output .= "            require_once \$file->getPathname();\n";
+                $output .= "        }\n";
+                $output .= "    }\n";
+                $output .= "}\n\n";
+
                 if (!str_contains($script, 'session_start()')) {
                     $output .= "// Auto session management\n";
                     $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
