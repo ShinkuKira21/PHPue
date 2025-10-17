@@ -161,9 +161,9 @@
 
         private function compileAllFiles() {
             $this->ensureDistDirectory();
-            
+
             $this->copyBackendLoaders();
-            
+
             $appPVue = 'App.pvue';
             $appPHP = '.dist/App.php';
             if(file_exists($appPVue)) {
@@ -173,33 +173,47 @@
                 echo "✅ Compiled: $appPVue -> $appPHP\n";
             }
 
+            // Compile .pvue components
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator('components', RecursiveDirectoryIterator::SKIP_DOTS)
             );
 
-            foreach ($iterator as $pvueFile) {
-                if (pathinfo($pvueFile, PATHINFO_EXTENSION) === 'pvue') {
-                    $relativePath = str_replace('\\', '/', substr($pvueFile, strlen('components/'))); // Normalize slashes
-                    $phpTargetPath = '.dist/components/' . substr($relativePath, 0, -5) . '.php'; // Replace .pvue with .php
+            foreach ($iterator as $file) {
+                $ext = pathinfo($file, PATHINFO_EXTENSION);
+                $relativePath = str_replace('\\', '/', substr($file, strlen('components/'))); // Normalize slashes
+                $targetPath = '.dist/components/' . $relativePath;
 
-                    $phpTargetDir = dirname($phpTargetPath);
-                    if (!is_dir($phpTargetDir)) {
-                        mkdir($phpTargetDir, 0755, true);
-                    }
+                $targetDir = dirname($targetPath);
+                if (!is_dir($targetDir)) {
+                    mkdir($targetDir, 0755, true);
+                }
 
-                    $phpCode = convert_pvue_file($pvueFile, false, $pvueFile);
+                if ($ext === 'pvue') {
+                    $phpTargetPath = substr($targetPath, 0, -5) . '.php'; // Replace .pvue with .php
+                    $phpCode = convert_pvue_file($file, false, $file);
                     file_put_contents($phpTargetPath, $phpCode);
-
-                    echo "✅ Compiled: $pvueFile -> $phpTargetPath\n";
+                    echo "✅ Compiled: $file -> $phpTargetPath\n";
+                } elseif ($ext === 'php') {
+                    copy($file, $targetPath);
+                    echo "📄 Copied PHP: $file -> $targetPath\n";
                 }
             }
 
+            // Compile .pvue views
             $files = glob('views/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = '.dist/pages/' . basename($pvueFile, '.pvue') . '.php';
                 $phpCode = convert_pvue_file($pvueFile, false, $pvueFile);
                 file_put_contents($phpFile, $phpCode);
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
+            }
+
+            // Copy .php views
+            $phpViews = glob('views/*.php');
+            foreach ($phpViews as $phpView) {
+                $targetPath = '.dist/pages/' . basename($phpView);
+                copy($phpView, $targetPath);
+                echo "📄 Copied PHP: $phpView -> $targetPath\n";
             }
 
             $converter = get_phpue_converter();
