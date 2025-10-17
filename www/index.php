@@ -173,14 +173,13 @@
                 echo "✅ Compiled: $appPVue -> $appPHP\n";
             }
 
-            // Compile .pvue components
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator('components', RecursiveDirectoryIterator::SKIP_DOTS)
             );
 
             foreach ($iterator as $file) {
                 $ext = pathinfo($file, PATHINFO_EXTENSION);
-                $relativePath = str_replace('\\', '/', substr($file, strlen('components/'))); // Normalize slashes
+                $relativePath = str_replace('\\', '/', substr($file, strlen('components/')));
                 $targetPath = '.dist/components/' . $relativePath;
 
                 $targetDir = dirname($targetPath);
@@ -189,7 +188,7 @@
                 }
 
                 if ($ext === 'pvue') {
-                    $phpTargetPath = substr($targetPath, 0, -5) . '.php'; // Replace .pvue with .php
+                    $phpTargetPath = substr($targetPath, 0, -5) . '.php';
                     $phpCode = convert_pvue_file($file, false, $file);
                     file_put_contents($phpTargetPath, $phpCode);
                     echo "✅ Compiled: $file -> $phpTargetPath\n";
@@ -199,7 +198,6 @@
                 }
             }
 
-            // Compile .pvue views
             $files = glob('views/*.pvue');
             foreach ($files as $pvueFile) {
                 $phpFile = '.dist/pages/' . basename($pvueFile, '.pvue') . '.php';
@@ -208,7 +206,6 @@
                 echo "✅ Compiled: $pvueFile -> $phpFile\n";
             }
 
-            // Copy .php views
             $phpViews = glob('views/*.php');
             foreach ($phpViews as $phpView) {
                 $targetPath = '.dist/pages/' . basename($phpView);
