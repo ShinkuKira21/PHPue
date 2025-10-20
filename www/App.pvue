@@ -3,22 +3,25 @@
     @require Navbar 'components/navigation/Navbar.pvue';
 
     #require 'views/index.pvue';
-    #require 'views/about.pvue';
     #require 'views/features.pvue';
     #require 'views/docs.pvue';
     #require 'views/a-get-started.pvue';
-    #require 'views/b-sponser.pvue';
-    #require 'views/c-philosophy.pvue';
+    #require 'views/a-sponser.pvue';
+    #require 'views/a-philosophy.pvue';
 </script>
 
 <header>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" href="assets/img/favicon_io/favicon.ico" type="image/x-icon"/>
 
     <link rel="stylesheet" href="assets/css/styles.css">
 
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <script src="assets/js/jquery-3.7.1.min.js"></script>
+
+ 
 </header>
 
 <template>

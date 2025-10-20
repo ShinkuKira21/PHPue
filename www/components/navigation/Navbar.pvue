@@ -6,46 +6,54 @@
 </script>
 
 <template>
-    <!-- Mint Theme Navigation -->
-    <nav class="bg-emerald-500 shadow-lg border-b border-emerald-600">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
-                <div class="flex-shrink-0 flex items-center">
-                    <div class="text-white font-bold text-2xl tracking-tight">PHPue</div>
-                </div>
-
-                <!-- Desktop Menu -->
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a p-for="$route in $routes" href="{{ $route['url'] }}" class="nav-link <?= $current_url === $route['url'] ? 'active' : ''; ?> text-emerald-100 hover:bg-emerald-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">{{ $route['title'] }}</a>
-                    </div>
-                </div>
-
-                <!-- Mobile menu button -->
-                <div class="md:hidden">
-                    <button type="button" class="bg-emerald-500 inline-flex items-center justify-center p-2 rounded-md text-emerald-100 hover:text-white hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-500" aria-controls="mobile-menu" aria-expanded="false">
-                        <span class="sr-only">Open main menu</span>
-                        <!-- Hamburger icon -->
-                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
+<nav class="sticky top-0 z-50 bg-white shadow-lg border-b border-slate-200">
+    <!-- Thin gradient accent at top -->
+    <div class="h-1 bg-gradient-to-r from-[#1c5d9c] via-[#47a783] to-[#62bd5a]"></div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo area stays clean white -->
+            <div class="flex-shrink-0 flex items-center">
+                <div class="font-bold text-2xl tracking-tight">
+                    <img src="assets/img/logo-large.png" alt="Logo" class="h-20 w-auto mr-2 inline-block">
                 </div>
             </div>
-        </div>
 
-        <!-- Mobile Menu (Hidden by default) -->
-        <div class="md:hidden hidden" id="mobile-menu">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-emerald-600">
-                <a p-for="$route in $routes" href="{{ $route['url'] }}" class="nav-link <?= $current_url === $route['url'] ? 'active' : ''; ?> text-emerald-100 hover:bg-emerald-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">{{ $route['title'] }}</a>
+            <div class="hidden md:block">
+                <div class="ml-10 flex items-baseline space-x-4">
+                    <a p-for="$route in $routes" href="{{ $route['url'] }}" 
+                       class="nav-link <?= $current_url === $route['url'] ? 'active text-[#47a783] font-semibold' : 'text-slate-600'; ?> 
+                              hover:text-[#1c5d9c] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+                        {{ $route['title'] }}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile button with black icon -->
+            <div class="md:hidden">
+                <button type="button" class="text-black hover:text-slate-700 inline-flex items-center justify-center p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1c5d9c] focus:ring-offset-2" aria-controls="mobile-menu" aria-expanded="false">
+                    <span class="sr-only">Open main menu</span>
+                    <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
             </div>
         </div>
-    </nav>
+    </div>
+
+    <div class="md:hidden hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-slate-200">
+            <a p-for="$route in $routes" href="{{ $route['url'] }}" 
+               class="nav-link <?= $current_url === $route['url'] ? 'active text-[#47a783] font-semibold' : 'text-slate-600'; ?> 
+                      hover:text-[#1c5d9c] block px-3 py-2 rounded-md text-base font-medium">
+                {{ $route['title'] }}
+            </a>
+        </div>
+    </div>
+</nav>
 </template>
 
 <cscript>
-    // Mobile menu toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
         const mobileMenuButton = document.querySelector('[aria-controls="mobile-menu"]');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -56,7 +64,7 @@
                 this.setAttribute('aria-expanded', !isExpanded);
                 mobileMenu.classList.toggle('hidden');
                 
-                // Toggle hamburger icon
+                // Toggle hamburger icon (stays black)
                 const icon = this.querySelector('svg');
                 if (!isExpanded) {
                     icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
@@ -66,7 +74,6 @@
             });
         }
         
-        // Close mobile menu when clicking on links
         const mobileLinks = mobileMenu.querySelectorAll('a');
         mobileLinks.forEach(link => {
             link.addEventListener('click', () => {
