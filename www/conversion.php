@@ -17,7 +17,6 @@
         public function addCompiledView($phpFilePath) {
             $viewName = basename($phpFilePath, '.php');
             
-            // Extract header from compiled PHP file
             $headerContent = $this->extractHeaderFromCompiled($phpFilePath);
             
             $this->routes[$viewName] = [
@@ -33,13 +32,10 @@
         
         $content = file_get_contents($phpFile);
         
-        // Look for the header in the compiled PHP output
-        // This pattern matches the header content in the PHP string
         if (preg_match('/\\$phpue_header\s*=\s*<<<\s*HTML\s*(.*?)\s*HTML/s', $content, $matches)) {
             return $matches[1] ?? '';
         }
         
-        // Alternative: Look for header in the HTML output section
         if (preg_match('/<head>.*?<title>(.*?)<\/title>.*?<\/head>/s', $content, $matches)) {
             return $matches[0] ?? '';
         }
@@ -115,7 +111,6 @@
                 return ob_get_clean();
             }
             
-            // Check if route exists and serve compiled PHP file
             if (isset($this->routes[$currentRoute])) {
                 $route = $this->routes[$currentRoute];
                 $compiledFile = $route['compiled'];
@@ -127,7 +122,6 @@
                 }
             }
             
-            // Fallback: check for compiled index.php
             $compiledIndex = '.dist/pages/index.php';
             if (file_exists($compiledIndex)) {
                 ob_start();
