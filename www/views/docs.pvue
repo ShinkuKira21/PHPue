@@ -5,7 +5,7 @@
     @require GetStartedCB 'components/codeBlocks/GetStarted.pvue';
     @require RequireCB 'components/codeBlocks/Require.pvue';
     @require TemplateBlocksCB 'components/codeBlocks/TemplateBlocks.pvue';
-    @require PModelDirectiveCB 'components/codeBlocks/PModelDirective.pvue';
+    @require FormHandlingPCB 'components/codeBlocks/FormHandlingPCB.pvue';
     @require AJAXPostCB 'components/codeBlocks/AJAXPost.pvue';
     @require AJAXGetCB 'components/codeBlocks/AJAXGet.pvue';
 </script>
@@ -285,7 +285,7 @@
                                 <div class="bg-white border border-gray-200 rounded-xl p-6">
                                     <h4 class="font-semibold text-lg mb-3">p-if</h4>
                                     <div class="bg-gray-900 rounded-lg p-4 mb-3">
-                                        <code class="text-green-400 text-sm">&lt;div p-if="$user-&gt;isAdmin"&gt;Admin Content&lt;/div&gt;</code>
+                                        <code class="text-green-400 text-sm">&lt;div <?= "p-if" ?>="$user-&gt;isAdmin"&gt;Admin Content&lt;/div&gt;</code>
                                     </div>
                                     <p class="text-gray-700">Conditionally render elements based on PHP expressions.</p>
                                 </div>
@@ -293,17 +293,38 @@
                                 <div class="bg-white border border-gray-200 rounded-xl p-6">
                                     <h4 class="font-semibold text-lg mb-3">p-for</h4>
                                     <div class="bg-gray-900 rounded-lg p-4 mb-3">
-                                        <code class="text-green-400 text-sm">&lt;li p-for="$item in $items"&gt;{{ $item->name }}&lt;/li&gt;</code>
+                                        <code class="text-green-400 text-sm">&lt;li <?= "p-for" ?>="$item in $items"&gt;{{ $item->name }}&lt;/li&gt;</code>
                                     </div>
                                     <p class="text-gray-700">Loop through arrays and objects to render lists.</p>
                                 </div>
-                                
                                 <div class="bg-white border border-gray-200 rounded-xl p-6">
-                                    <h4 class="font-semibold text-lg mb-3">p-model <span class="text-sm text-orange-600">(Coming Soon)</span></h4>
-                                    <div class="bg-gray-900 rounded-xl p-6 mb-6">
-                                        <PModelDirectiveCB></PModelDirectiveCB>
+                                    <h4 class="font-semibold text-lg mb-3">Form Handling Philosophy</h4>
+                                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0">
+                                                <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h5 class="text-blue-800 font-medium">Privacy-First Form Design</h5>
+                                                <p class="text-blue-700 mt-1 text-sm">
+                                                    PHPue respects user privacy by avoiding automatic form tracking. 
+                                                    Instead of two-way data binding that monitors every keystroke, 
+                                                    we encourage explicit form submissions with clear user intent.
+                                                </p>
+                                                <div class="mt-3 bg-gray-900 rounded-lg p-4 border border-gray-700">
+                                                    <div class="text-sm text-gray-300 mb-2">// views/contact.pvue - Complete form example</div>
+                                                    <FormHandlingPCB></FormHandlingPCB>
+                                                </div>
+                                                <p class="text-blue-600 text-xs mt-2">
+                                                    💡 <strong>Note:</strong> We use explicit form submission instead of automatic tracking. 
+                                                    Users must intentionally click "Submit" - no passive data collection. - It is super easy to either modify the framework to support p-model (the logic for the REGEX is already there), or to implement your own two-way binding with the power of PHPue's AJAX capabilities and CSR support for tracking.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p class="text-gray-700">Two-way data binding for form inputs.</p>
+                                    <p class="text-gray-700">Respect user privacy with explicit form handling patterns.</p>
                                 </div>
                             </div>
                         </section>

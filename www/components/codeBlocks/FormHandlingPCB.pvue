@@ -1,0 +1,40 @@
+<template>
+<pre class="text-green-400 text-sm font-mono overflow-x-auto">&lt;script&gt;
+    @AJAX('POST')
+    function ajaxFormSubmit($input) {
+        $formData = $input['formData'] ?? [];
+        
+        // Store in session to use later
+        $_SESSION['subForm_email'] = $formData['email'] ?? '';
+    }
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;form onsubmit="handleSubmit(event, 'ajaxFormSubmit')"&gt;
+        &lt;input name="email" type="email"&gt;
+        &lt;button type="submit"&gt;Submit&lt;/button&gt;
+    &lt;/form&gt;
+&lt;/template&gt;
+
+&lt;cscript&gt;
+    let emailAddr = '';
+
+    async function handleSubmit(event, methodName) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+
+        const response = await fetch('', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                action: methodName,
+                formData: Object.fromEntries(formData)
+            })
+        });
+
+        if (response.status === 200) {
+            emailAddr = <?= "{{" ?> $_SESSION['subForm_email'] <?= "}}" ?>;
+        }
+    }
+&lt;/cscript&gt;</pre>
+</template>

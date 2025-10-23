@@ -49,8 +49,8 @@
                         Familiar syntax with p-if, p-for, and p-model. Write less code, get more done.
                     </p>
                     <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm">
-                        &lt;div p-if="$user"&gt;Welcome!&lt;/div&gt;<br>
-                        &lt;li p-for="$item in $items"&gt;<br>
+                        &lt;div <?= "p-if" ?>="$user"&gt;Welcome!&lt;/div&gt;<br>
+                        &lt;li <?= "p-for" ?>="$item in $items"&gt;<br>
                         &nbsp;&nbsp;&#123;&#123; $item.name &#125;&#125;<br>
                         &lt;/li&gt;
                     </div>
@@ -135,7 +135,7 @@
                         <h4 class="font-bold text-lg mb-3">p-if</h4>
                         <p class="text-blue-100 mb-4">Conditional rendering made simple</p>
                         <div class="bg-blue-800 rounded-lg p-4 font-mono text-sm">
-                            &lt;div p-if="$user-&gt;isAdmin"&gt;<br>
+                            &lt;div <?= "p-if" ?>="$user-&gt;isAdmin"&gt;<br>
                             &nbsp;&nbsp;Admin Dashboard<br>
                             &lt;/div&gt;
                         </div>
@@ -144,17 +144,21 @@
                         <h4 class="font-bold text-lg mb-3">p-for</h4>
                         <p class="text-blue-100 mb-4">Clean loops without PHP tags</p>
                         <div class="bg-blue-800 rounded-lg p-4 font-mono text-sm">
-                            &lt;li p-for="$user in $users"&gt;<br>
+                            &lt;li <?= "p-for"?>="$user in $users"&gt;<br>
                             &nbsp;&nbsp;&#123;&#123; $user-&gt;name &#125;&#125;<br>
                             &lt;/li&gt;
                         </div>
                     </div>
                     <div class="bg-blue-700/50 rounded-xl p-6 backdrop-blur-sm">
-                        <h4 class="font-bold text-lg mb-3">p-model <span class="text-yellow-300 text-sm">(Soon)</span></h4>
-                        <p class="text-blue-100 mb-4">Two-way data binding</p>
-                        <div class="bg-blue-800 rounded-lg p-4 font-mono text-sm">
-                            &lt;input p-model="$username"&gt;<br>
-                            &lt;span&gt;&#123;&#123; $username &#125;&#125;&lt;/span&gt;
+                        <h4 class="font-bold text-lg mb-3">p-model<br> <span class="text-yellow-300 text-sm">(Privacy-Conscious Design)</span></h4>
+                        <p class="text-blue-100 mb-4">Respects user privacy with intentional form handling</p>
+                        <div class="bg-blue-800 rounded-lg p-4 text-sm">
+                            <div class="flex items-start text-blue-200">
+                                <svg class="w-4 h-4 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span>PHPue respects user privacy by avoiding automatic keystroke tracking. Build explicit form submissions that require clear user intent.</span>
+                            </div>
                         </div>
                     </div>
                 </div>
