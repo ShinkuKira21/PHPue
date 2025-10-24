@@ -106,9 +106,17 @@
             $currentRoute = $_GET['page'] ?? 'index';
 
             if (!isset($this->routes[$currentRoute])) {
+                http_response_code(404);
+                
+                $http404File = 'httpReqs/http404.php';
+                if (file_exists($http404File)) {
+                    ob_start();
+                    include $http404File;
+                    return ob_get_clean();
+                }
+                
                 if (isset($this->routes['404'])) {
                     $currentRoute = '404';
-                    http_response_code(404);
                 } else {
                     return "<h1 style='text-align: center; font-weight: bold;'>404 - Page Not Found</h1>";
                 }
@@ -872,10 +880,6 @@
                 $views = glob('views/*.pvue');
                 foreach ($views as $view) {
                     $routing->addView($view);
-                }
-                
-                if (file_exists('views/404.pvue')) {
-                    $routing->addView('views/404.pvue');
                 }
             }
             

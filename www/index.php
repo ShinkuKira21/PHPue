@@ -109,13 +109,11 @@
             $distApp = '.dist/App.php';
             $appPVue = 'App.pvue';
             
-            // Check if requested route exists
             $currentRoute = $_GET['page'] ?? 'index';
             $routing = get_phpue_routing();
             $routeExists = isset($routing->routes[$currentRoute]);
             
             if(!$routeExists && $currentRoute !== '404') {
-                // Route doesn't exist, serve 404 page
                 $_GET['page'] = '404';
                 http_response_code(404);
             }
@@ -174,6 +172,13 @@
             $this->ensureDistDirectory();
 
             $this->copyBackendLoaders();
+
+            $httpReqsDir = 'httpReqs';
+            $distHttpReqsDir = '.dist/httpReqs';
+            if (is_dir($httpReqsDir)) {
+                $this->copyDirectory($httpReqsDir, $distHttpReqsDir);
+                echo "✅ Copied httpReqs to .dist/httpReqs/\n";
+            }
 
             $appPVue = 'App.pvue';
             $appPHP = '.dist/App.php';
