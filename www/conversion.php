@@ -108,6 +108,14 @@
             if (!isset($this->routes[$currentRoute])) {
                 http_response_code(404);
                 
+                $headerFile = 'httpReqs/http404Head.php';
+                if (file_exists($headerFile)) {
+                    include $headerFile;
+                    if (isset($phpue_header)) {
+                        $GLOBALS['phpue_http404_header'] = $phpue_header;
+                    }
+                }
+
                 $http404File = 'httpReqs/http404.php';
                 if (file_exists($http404File)) {
                     ob_start();
@@ -721,6 +729,15 @@
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
                         
+            $output .= "// Pre-determine 404 status for header injection\n";
+            $output .= "\$current_route = \$_GET['page'] ?? 'index';\n";
+            $output .= "\$routing = get_phpue_routing();\n";
+            $output .= "\$is_404 = !isset(\$routing->routes[\$current_route]);\n";
+            $output .= "if (\$is_404 && file_exists('httpReqs/http404Head.php')) {\n";
+            $output .= "    include 'httpReqs/http404Head.php';\n";
+            $output .= "    \$GLOBALS['phpue_http404_header'] = \$phpue_header ?? '';\n";
+            $output .= "}\n";
+
             if ($bRoot) {
                 $output .= "// Auto-load backend classes\n";
                 $output .= "// Determine correct backend path for current environment\n";
@@ -813,7 +830,6 @@
                 $output .= "<!DOCTYPE html>\n";
                 $output .= "<html>\n";
                 $output .= "<head>\n";
-                
                 $output .= "<?php\n";
                 $output .= "echo \$phpue_header ?? '';\n";
                 $output .= "\n";
@@ -826,6 +842,7 @@
                 $output .= "        echo \"\\n\" . \$view_header;\n";
                 $output .= "    }\n";
                 $output .= "}\n";
+                $output .= "echo \$GLOBALS['phpue_http404_header'] ?? '';\n";
                 $output .= "?>\n";
                 
                 $output .= "</head>\n";
