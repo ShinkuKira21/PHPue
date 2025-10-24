@@ -104,7 +104,16 @@
         
         public function getCurrentPageContent() {
             $currentRoute = $_GET['page'] ?? 'index';
-            
+
+            if (!isset($this->routes[$currentRoute])) {
+                if (isset($this->routes['404'])) {
+                    $currentRoute = '404';
+                    http_response_code(404);
+                } else {
+                    return "<h1 style='text-align: center; font-weight: bold;'>404 - Page Not Found</h1>";
+                }
+            }
+                    
             if (isset($GLOBALS['phpue_current_page_code'])) {
                 ob_start();
                 eval('?>' . $GLOBALS['phpue_current_page_code']);
@@ -845,7 +854,7 @@
         return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath);
     }
 
-  function get_phpue_routing() {
+    function get_phpue_routing() {
         static $converter = null;
         if ($converter === null) {
             $converter = new PHPueConverter();
@@ -863,6 +872,10 @@
                 $views = glob('views/*.pvue');
                 foreach ($views as $view) {
                     $routing->addView($view);
+                }
+                
+                if (file_exists('views/404.pvue')) {
+                    $routing->addView('views/404.pvue');
                 }
             }
             

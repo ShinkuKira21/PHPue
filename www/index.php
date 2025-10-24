@@ -109,6 +109,17 @@
             $distApp = '.dist/App.php';
             $appPVue = 'App.pvue';
             
+            // Check if requested route exists
+            $currentRoute = $_GET['page'] ?? 'index';
+            $routing = get_phpue_routing();
+            $routeExists = isset($routing->routes[$currentRoute]);
+            
+            if(!$routeExists && $currentRoute !== '404') {
+                // Route doesn't exist, serve 404 page
+                $_GET['page'] = '404';
+                http_response_code(404);
+            }
+            
             if(file_exists($distApp) && is_dir('.dist')) {
                 $this->serveFromDist();
             } elseif(file_exists($appPVue)) {
