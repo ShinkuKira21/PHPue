@@ -729,13 +729,22 @@
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
                         
-            $output .= "// Pre-determine 404 status for header injection\n";
+            // Pre-determine 404 status for header injection
             $output .= "\$current_route = \$_GET['page'] ?? 'index';\n";
             $output .= "\$routing = get_phpue_routing();\n";
             $output .= "\$is_404 = !isset(\$routing->routes[\$current_route]);\n";
-            $output .= "if (\$is_404 && file_exists('httpReqs/http404Head.php')) {\n";
-            $output .= "    include 'httpReqs/http404Head.php';\n";
-            $output .= "    \$GLOBALS['phpue_http404_header'] = \$phpue_header ?? '';\n";
+            $output .= "if (\$is_404) {\n";
+            $output .= "    if (file_exists('httpReqs/http404Head.php')) {\n";
+            $output .= "        include 'httpReqs/http404Head.php';\n";
+            $output .= "        \$GLOBALS['phpue_http404_header'] = \$phpue_header ?? '';\n";
+            $output .= "    } else {\n";
+            $output .= "        // Fallback headers when httpReqs/ doesn't exist\n";
+            $output .= "        \$GLOBALS['phpue_http404_header'] = <<<HTML\n";
+            $output .= "            <title>404 - Page Not Found</title>\n";
+            $output .= "            <meta name=\"description\" content=\"The page you're looking for doesn't exist\">\n";
+            $output .= "            <meta name=\"keywords\" content=\"404, page not found\">\n";
+            $output .= "        HTML;\n";
+            $output .= "    }\n";
             $output .= "}\n";
 
             if ($bRoot) {
