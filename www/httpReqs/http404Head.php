@@ -8,6 +8,5 @@ $phpue_header = <<<HTML
     <meta name="author" content="Edward Patch">
 HTML;
 
-// Store it globally for the main template
 $GLOBALS['phpue_http404_header'] = $phpue_header;
 ?>
