@@ -5,11 +5,7 @@
 
     $lang = load_lang('english');
 
-    // yes, PHP is age 1995, but also JS is...
-    // I wanted to have 2 different numbers, so
-    // you can see what the difference is on Tech Demo.
-    // xD
-    $age = 2025 - 1999; 
+    $age = 2025 - 1995; 
     $fruits = ["Banana", "Apple", "Cherry"];
     $btnCount = $_SESSION['btnCount'] ?? 0;
     $counter = 20;
