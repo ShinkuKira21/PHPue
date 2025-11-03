@@ -28,20 +28,24 @@
         }
 
         private function extractHeaderFromCompiled($phpFile) {
-        if (!file_exists($phpFile)) return '';
-        
-        $content = file_get_contents($phpFile);
-        
-        if (preg_match('/\\$phpue_header\s*=\s*<<<\s*HTML\s*(.*?)\s*HTML/s', $content, $matches)) {
-            return $matches[1] ?? '';
+            if (!file_exists($phpFile)) return '';
+            
+            $content = file_get_contents($phpFile);
+            
+            if (preg_match('/\\$phpue_header\s*=\s*<<<\s*HTML\s*(.*?)\s*HTML/s', $content, $matches)) {
+                return $matches[1] ?? '';
+            }
+            
+            if (preg_match('/<header>(.*?)<\/header>/s', $content, $matches)) {
+                return $matches[1] ?? '';
+            }
+            
+            if (preg_match('/<head>(.*?)<\/head>/s', $content, $matches)) {
+                return $matches[1] ?? '';
+            }
+            
+            return '';
         }
-        
-        if (preg_match('/<head>.*?<title>(.*?)<\/title>.*?<\/head>/s', $content, $matches)) {
-            return $matches[0] ?? '';
-        }
-        
-        return '';
-    }
 
         
         private function extractHeaderContent($pvueFile) {
@@ -53,20 +57,36 @@
             return $matches[1] ?? '';
         }
         
-       private function extractMetaData($headerContent) {
+        private function extractMetaData($headerContent) {
             if (empty($headerContent)) return [];
             
             $meta = [];
             
             if (preg_match('/<title>(.*?)<\/title>/s', $headerContent, $matches)) {
-                $meta['title'] = trim($matches[1]);
+                $titleContent = trim($matches[1]);
+                $meta['title'] = $titleContent;
             }
             
+            $processedHeader = $this->processHeaderTemplates($headerContent);
+            
             $meta['raw_header'] = $headerContent;
+            $meta['processed_header'] = $processedHeader;
             
             return $meta;
         }
 
+        public function processHeaderTemplates($headerContent) {
+            $headerContent = preg_replace_callback(
+                '/\{\{\s*(\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s*\}\}/',
+                function($matches) {
+                    $var = trim($matches[1]);
+                    return htmlspecialchars($var);
+                },
+                $headerContent
+            );
+            
+            return $headerContent;
+        }
 
         public function getNavigation() {
             $nav = [];
@@ -104,7 +124,32 @@
         
         public function getCurrentPageContent() {
             $currentRoute = $_GET['page'] ?? 'index';
-            
+
+            if (!isset($this->routes[$currentRoute])) {
+                http_response_code(404);
+                
+                $headerFile = 'httpReqs/http404Head.php';
+                if (file_exists($headerFile)) {
+                    include $headerFile;
+                    if (isset($phpue_header)) {
+                        $GLOBALS['phpue_http404_header'] = $phpue_header;
+                    }
+                }
+
+                $http404File = 'httpReqs/http404.php';
+                if (file_exists($http404File)) {
+                    ob_start();
+                    include $http404File;
+                    return ob_get_clean();
+                }
+                
+                if (isset($this->routes['404'])) {
+                    $currentRoute = '404';
+                } else {
+                    return "<h1 style='text-align: center; font-weight: bold;'>404 - Page Not Found</h1>";
+                }
+            }
+                    
             if (isset($GLOBALS['phpue_current_page_code'])) {
                 ob_start();
                 eval('?>' . $GLOBALS['phpue_current_page_code']);
@@ -135,12 +180,27 @@
         public function buildHeaderFromMeta($meta) {
             $header = '';
             
-            if (isset($meta['raw_header']) && !empty($meta['raw_header'])) {
-                $header = $this->processAssetPaths($meta['raw_header']);
-                $header = $this->ensureCorrectScriptOrder($header);
+            if (isset($meta['processed_header']) && !empty($meta['processed_header'])) {
+                $header = $meta['processed_header'];
+            } elseif (isset($meta['raw_header']) && !empty($meta['raw_header'])) {
+                $header = $meta['raw_header'];
             }
             
+            $header = $this->processAssetPaths($header);
+            $header = $this->ensureCorrectScriptOrder($header);
+            
             return $header;
+        }
+
+        public function executeHeaderPHP($headerContent) {
+            ob_start();
+            
+            $phpCode = '?>' . $headerContent;
+            
+            eval($phpCode);
+            
+            $result = ob_get_clean();
+            return $result;
         }
 
         public function ensureCorrectScriptOrder($header) {
@@ -704,27 +764,45 @@
         private function buildOutput($script, $template, $cscript, $bRoot, $header = '') {
             $output = "<?php\n";
                         
-            if ($bRoot) {
-                $output .= "// Auto-load backend classes\n";
-                $output .= "// Determine correct backend path for current environment\n";
-                $output .= "if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {\n";
-                $output .= "    // Build mode: use source backend\n";
-                $output .= "    \$backendDir = 'backend';\n";
-                $output .= "} else {\n";
-                $output .= "    // Runtime: check if we're in development or production\n";
-                $output .= "    \$backendDir = is_dir('.dist/backend') ? '.dist/backend' : 'backend';\n";
-                $output .= "}\n";
-                $output .= "if (is_dir(\$backendDir)) {\n";
-                $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
-                $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
-                $output .= "    );\n";
-                $output .= "    foreach (\$iterator as \$file) {\n";
-                $output .= "        if (\$file->getExtension() === 'php') {\n";
-                $output .= "            require_once \$file->getPathname();\n";
-                $output .= "        }\n";
-                $output .= "    }\n";
-                $output .= "}\n\n";
+             $output .= "// Auto-load backend classes\n";
+            $output .= "// Determine correct backend path for current environment\n";
+            $output .= "if (defined('PHPUE_BUILD_MODE') && PHPUE_BUILD_MODE === true) {\n";
+            $output .= "    // Build mode: use source backend\n";
+            $output .= "    \$backendDir = 'backend';\n";
+            $output .= "} else {\n";
+            $output .= "    // Runtime: check if we're in development or production\n";
+            $output .= "    \$backendDir = is_dir('.dist/backend') ? '.dist/backend' : 'backend';\n";
+            $output .= "}\n";
+            $output .= "if (is_dir(\$backendDir)) {\n";
+            $output .= "    \$iterator = new RecursiveIteratorIterator(\n";
+            $output .= "        new RecursiveDirectoryIterator(\$backendDir, RecursiveDirectoryIterator::SKIP_DOTS)\n";
+            $output .= "    );\n";
+            $output .= "    foreach (\$iterator as \$file) {\n";
+            $output .= "        if (\$file->getExtension() === 'php') {\n";
+            $output .= "            require_once \$file->getPathname();\n";
+            $output .= "        }\n";
+            $output .= "    }\n";
+            $output .= "}\n\n";
 
+            // Pre-determine 404 status for header injection
+            $output .= "\$current_route = \$_GET['page'] ?? 'index';\n";
+            $output .= "\$routing = get_phpue_routing();\n";
+            $output .= "\$is_404 = !isset(\$routing->routes[\$current_route]);\n";
+            $output .= "if (\$is_404) {\n";
+            $output .= "    if (file_exists('httpReqs/http404Head.php')) {\n";
+            $output .= "        include 'httpReqs/http404Head.php';\n";
+            $output .= "        \$GLOBALS['phpue_http404_header'] = \$phpue_header ?? '';\n";
+            $output .= "    } else {\n";
+            $output .= "        // Fallback headers when httpReqs/ doesn't exist\n";
+            $output .= "        \$GLOBALS['phpue_http404_header'] = <<<HTML\n";
+            $output .= "            <title>404 - Page Not Found</title>\n";
+            $output .= "            <meta name=\"description\" content=\"The page you're looking for doesn't exist\">\n";
+            $output .= "            <meta name=\"keywords\" content=\"404, page not found\">\n";
+            $output .= "        HTML;\n";
+            $output .= "    }\n";
+            $output .= "}\n";
+
+            if ($bRoot) {
                 if (!str_contains($script, 'session_start()')) {
                     $output .= "// Auto session management\n";
                     $output .= "if (session_status() === PHP_SESSION_NONE) {\n";
@@ -783,24 +861,29 @@
                 $output .= "}\n\n";
 
                 $output .= $script . "\n";
+            } else {
+                $output .= $script . "\n";
             }
-                                            
+                                                        
             if (!empty($header)) {
-                $output .= "\$phpue_header = <<<HTML\n{$header}\nHTML;\n";
+                $processedHeader = $this->routing->processHeaderTemplates($header);
+                
+                $output .= "\$phpue_header = <<<HTML\n{$processedHeader}\nHTML;\n";
             }
             
-            $output .= $script . "\n";
             $output .= "?>\n";
 
             if ($bRoot) {
                 $output .= "<!DOCTYPE html>\n";
                 $output .= "<html>\n";
                 $output .= "<head>\n";
-                
                 $output .= "<?php\n";
-                $output .= "echo \$phpue_header ?? '';\n";
+                $output .= "// Output main App header\n";
+                $output .= "if (isset(\$phpue_header)) {\n";
+                $output .= "    echo \$phpue_header;\n";
+                $output .= "}\n";
                 $output .= "\n";
-                $output .= "\$routing = get_phpue_routing();\n";
+                $output .= "// Output view-specific header\n";
                 $output .= "\$current_route = \$_GET['page'] ?? 'index';\n";
                 $output .= "\$route_meta = \$routing->getRouteMeta(\$current_route);\n";
                 $output .= "if (!empty(\$route_meta)) {\n";
@@ -809,8 +892,9 @@
                 $output .= "        echo \"\\n\" . \$view_header;\n";
                 $output .= "    }\n";
                 $output .= "}\n";
+                $output .= "// Output 404 header if needed\n";
+                $output .= "echo \$GLOBALS['phpue_http404_header'] ?? '';\n";
                 $output .= "?>\n";
-                
                 $output .= "</head>\n";
                 $output .= "<body>\n";
                 $output .= $template . "\n";
@@ -845,7 +929,7 @@
         return $converter->convertPVueToPHP($content, $bRoot, $pvueFilePath);
     }
 
-  function get_phpue_routing() {
+    function get_phpue_routing() {
         static $converter = null;
         if ($converter === null) {
             $converter = new PHPueConverter();

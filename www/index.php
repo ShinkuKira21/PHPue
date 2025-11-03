@@ -1,12 +1,16 @@
 <?php
+    define('PHPUE_VERSION', '0.0.1');
+    
     require_once 'conversion.php';
 
     class PHPueServer {
         public $bDevMode;
+        public $bLiveMode;
 
         public function __construct()
         {
             $this->bDevMode = $this->detectDevMode();
+            $this->bLiveMode = isset($_GET['live']);
         }
 
         public function serve() {
@@ -24,6 +28,17 @@
         }
 
         public function build() {
+            global $argv; // Need to access argv inside the method
+            
+            // Check if .dist/ exists AND this is NOT a CLI build command
+            $isCliBuild = (isset($argv[1]) && $argv[1] === 'build');
+            if (is_dir('.dist') && !$isCliBuild) {
+                echo "❌ Build disabled - .dist/ directory already exists\n";
+                echo "   This appears to be a production environment\n";
+                echo "   To force rebuild, use: php index.php build\n";
+                return;
+            }
+            
             $this->ensureDistDirectory();
             $this->compileAllFiles();
             echo "✅ Build complete! All .pvue files compiled to .dist/ directory\n";
@@ -55,38 +70,67 @@
             return $_SERVER['SERVER_NAME'] === 'localhost' || $_SERVER['SERVER_ADDR'] === '127.0.0.1' || isset($_GET['dev']);
         }
 
-        private function handleHotReload() {
+       private function handleHotReload() {
+            $bLiveMode = isset($_GET['live']) || $this->bLiveMode;
+            
+            if (!$bLiveMode) {
+                http_response_code(403);
+                echo "Hot reload requires ?live parameter";
+                return;
+            }
+
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
             header('Content-Type: text/event-stream');
             header('Cache-Control: no-cache');
             header('Access-Control-Allow-Origin: *');
+            
+            ob_implicit_flush(true);
+            
+            echo "data: connected\n\n";
+            flush();
 
             $lastCheck = time();
-
-            while(true) {
+            
+            for ($i = 0; $i < 30; $i++) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                
                 $files = array_merge(
                     glob('*.pvue'),
-                    glob('components/*.pvue'),
-                    glob('views/*.pvue'),
-                    glob('backend/*.php')
+                    glob('components/*.pvue'), 
+                    glob('views/*.pvue')
                 );
 
-                $bChanged = false;
+                $changed = false;
                 foreach($files as $file) {
                     if(filemtime($file) > $lastCheck) {
-                        $bChanged = true;
+                        $changed = true;
                         break;
                     }
                 }
 
-                if($bChanged) {
-                    echo "data: ".json_encode(['reload' => true, 'time' => time()])."\n\n";
-                    ob_flush();
+                if($changed) {
+                    echo "data: reload\n\n";
                     flush();
-                    $lastCheck = time();
+                    exit;
                 }
-
+                
+                echo ": heartbeat\n\n";
+                flush();
+                
+                if (connection_aborted()) {
+                    break;
+                }
+                
                 sleep(1);
             }
+            
+            echo "data: timeout\n\n";
+            flush();
         }
 
         private function handleCompilation()
@@ -108,6 +152,15 @@
         {
             $distApp = '.dist/App.php';
             $appPVue = 'App.pvue';
+            
+            $currentRoute = $_GET['page'] ?? 'index';
+            $routing = get_phpue_routing();
+            $routeExists = isset($routing->routes[$currentRoute]);
+            
+            if(!$routeExists && $currentRoute !== '404') {
+                $_GET['page'] = '404';
+                http_response_code(404);
+            }
             
             if(file_exists($distApp) && is_dir('.dist')) {
                 $this->serveFromDist();
@@ -136,6 +189,10 @@
             $this->preProcessAllViewsForAjax();
             $phpCode = convert_pvue_file($appPVue, true);
             eval('?>' . $phpCode);
+
+            if ($this->bLiveMode) {
+                echo $this->injectHotReloadScript();
+            }
         }
         
         private function preProcessAllViewsForAjax() {
@@ -163,6 +220,13 @@
             $this->ensureDistDirectory();
 
             $this->copyBackendLoaders();
+
+            $httpReqsDir = 'httpReqs';
+            $distHttpReqsDir = '.dist/httpReqs';
+            if (is_dir($httpReqsDir)) {
+                $this->copyDirectory($httpReqsDir, $distHttpReqsDir);
+                echo "✅ Copied httpReqs to .dist/httpReqs/\n";
+            }
 
             $appPVue = 'App.pvue';
             $appPHP = '.dist/App.php';
@@ -272,30 +336,37 @@
         }
 
         public function injectHotReloadScript() {
-            if(!$this->bDevMode) return '';
+            if(!$this->bLiveMode) return '';
 
             return <<<HTML
                 <script>
-                    if(typeof(EventSource) !== "undefined") {
-                        const eventSource = new EventSource("?hot-reload=1");
+                    (function setupHotReload() {
+                        if(typeof(EventSource) === "undefined") {
+                            console.log("❌ PHPue Hot Reload: Not supported in this browser");
+                            return;
+                        }
+
+                        console.log("🔥 PHPue Live Mode: Hot reload active - AJAX may not work properly");
+                        
+                        const eventSource = new EventSource("?hot-reload=1&live=1");
+
+                        eventSource.onopen = function() {
+                            console.log("✅ PHPue Live Mode: Connected and watching for changes...");
+                        };
 
                         eventSource.onmessage = function(event) {
-                            const data = JSON.parse(event.data);
-
-                            if(data.reload) {
-                                console.log("🔄 PHPue Hot Reload: Changes detected, refreshing...");
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 100);
+                            if (event.data === 'reload') {
+                                console.log("🔄 PHPue Live Mode: Changes detected, refreshing...");
+                                window.location.reload();
                             }
-                        }
+                        };
 
                         eventSource.onerror = function(event) {
-                            console.log("❌ PHPue Hot Reload: Connection lost");
-                        }
+                            console.log("❌ PHPue Live Mode: Connection error");
+                            eventSource.close();
+                        };
 
-                        console.log("🔥 PHPue Hot Reload: Connected and watching for changes...")
-                    } else console.log("❌ PHPue Hot Reload: Not supported in this browser");
+                    })();
                 </script>
             HTML;
         }
@@ -319,8 +390,6 @@
     $server = new PHPueServer();
 
     if (isset($_GET['build']) || (isset($argv[1]) && $argv[1] === 'build')) {
-        define('PHPUE_BUILD_MODE', true);
-
         $server->build();
         exit;
     }
