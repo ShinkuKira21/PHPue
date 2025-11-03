@@ -1,6 +1,5 @@
 <script>
     $routes = phpue_navigation();
-    $routes = array_reverse($routes, true);
 
     $current_url = "$_SERVER[REQUEST_URI]";
 </script>
