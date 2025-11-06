@@ -1,3 +1,8 @@
+**Official Website:** [PHPue](https://phpue.co.uk) | **Official Documentation:** [PHPue Documentation](https://phpue.co.uk/docs)
+---
+[PHPue Insights](https://phpue.co.uk/ue-insights) - [PHPue Releases](https://phpue.co.uk/ue-releases) - [PHPue Deployment](https://phpue.co.uk/deployment)
+---
+
 **Keep Building, Even When Things Break**
 
 This framework works fully out of the box. While there may still be occasional bugs related to new features—such as custom p-directives or {{ }} variable echoing—you can always fall back to traditional PHP as a temporary workaround.
